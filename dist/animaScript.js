@@ -1,6 +1,7 @@
-function AnimaScript(options)
-{
-    this.element = options.element;
+'use strict';
+
+function AnimaScript(options, callback) {
+    this.element = options.element;//HTML element
     
     options.unit===undefined//unit : c-haracter, w-ord (default 'c')
     ? this.unit = "c" 
@@ -18,6 +19,10 @@ function AnimaScript(options)
     ? this.duration = 1000 
     : this.duration = options.duration;
     
+    callback==undefined
+    ? this.callback=null
+    : this.callback=callback;
+        
     this.text = this.getCharacters();
     this.reversedText = this.getCharacters().reverse();
     this.charactersCount = this.getCounts().characters;
@@ -40,7 +45,7 @@ AnimaScript.prototype.getTextNodes = function() {//get array of text nodes
 				getTextNodes(element.childNodes[i]);//if childnode not a text node : search for text nodes into it (recursion)
 			}
 		}
-		return textNodes;//text nodes array(each text node is an object (properties : parent element, nodeIndex, value)
+		return textNodes;//text nodes array(each text node is an object ; properties : parent element, nodeIndex, value)
 	};
 	
 	return getTextNodes(this.element);
@@ -49,8 +54,7 @@ AnimaScript.prototype.getTextNodes = function() {//get array of text nodes
 AnimaScript.prototype.getCharacters = function() {//get array of characters
 	var nodes = this.getTextNodes();
 	var text = [];
-	for(var i=0; i<nodes.length; i++)
-	{
+	for(var i=0; i<nodes.length; i++) {
 		for(var j=0; j<nodes[i].value.length; j++) {
 			var character = {};
 			character.value = nodes[i].value[j];//character
@@ -59,28 +63,28 @@ AnimaScript.prototype.getCharacters = function() {//get array of characters
 			text.push(character);
 		}
 	}
-	return text;//array of characters (each character is an object (properties : parent element, nodeIndex, value)
+	return text;//array of characters (each character is an object ; properties : parent element, nodeIndex, value)
 };
 
 AnimaScript.prototype.getCounts = function() {//get array of characters
 	var nodes = this.getTextNodes();
 	var count = {};
 	var characterArray = [];
-	for(var i=0; i<nodes.length; i++)
-	{
+	for(var i=0; i<nodes.length; i++) {
 		characterArray = characterArray.concat(nodes[i].value);
 	}
-	count.characters = characterArray.length;
+	count.characters = characterArray.length;//count characters
 	var string = characterArray.toString();
-	var array = string.match(/ |\u00A0/g);
-	count.words = array.length+1;
+	var array = string.match(/ |\u00A0/g);//count spaces
+	count.words = array.length+1;//count words = count spaces+1
 	return count;
 };
     
 AnimaScript.prototype.emptyNodes = function() {//emptying nodes
 	var element = this.element;
 	var nodes = this.getTextNodes();
-	//set width/height/margin of element before getting it empty (not very good for performance) : 
+	//in order to prevent mouvement : 
+	//set width/height/margin of element before emptying nodes (not very good for performance)
 	var styles = window.getComputedStyle(element);
 	if(styles.display!=='inline') {
 		element.style.width = element.clientWidth + "px";
@@ -91,10 +95,9 @@ AnimaScript.prototype.emptyNodes = function() {//emptying nodes
 			element.style.marginBottom = styles.marginBottom;
 	}
 	element.style.visibility = "hidden";
-	for(var i=0; i < nodes.length; i++)
-	{
-		//element empty
-		nodes[i].parent.childNodes[nodes[i].nodeIndex].nodeValue = "";//for each text node, value = ""
+	for(var i=0; i < nodes.length; i++) {
+		//each node emptied (nodeValue = "")
+		nodes[i].parent.childNodes[nodes[i].nodeIndex].nodeValue = "";
 	}
 };
 		
@@ -104,13 +107,14 @@ AnimaScript.prototype.spellCharacters = function() {
 	var delay = this.delay;
 	var speed = this.duration/this.charactersCount;
 	var type = this.type;
+	var callback = this.callback;
 	var interval;
 			
-	if(type == "m") {//middle (type: m) : spells from
+	if(type == "m") {//middle (type: m) : spells from the middle
 		var text = this.text;
 		var index = Math.ceil(text.length/2)-1;//index backwards
 		var indexF = index + 1;//index forwards
-		var flag = true
+		var flag = true;
 					
 		window.setTimeout(function(){launchMiddle();},delay);
 		
@@ -119,7 +123,7 @@ AnimaScript.prototype.spellCharacters = function() {
 			interval = window.setInterval(function(){spellMiddle();},speed);//speed*2 because both functions are launched together
 		}
 		
-		function spellMiddle() {//both functions are launched together. 
+		function spellMiddle() {//theses two functions are launched alternatively 
 			if(flag==true) {
 				spellMiddleBack();
 			} else {
@@ -136,6 +140,8 @@ AnimaScript.prototype.spellCharacters = function() {
 				flag = false;
 			} else {
 				window.clearInterval(interval);
+				if(callback)
+					callback();
 			}
 		}
 		
@@ -148,60 +154,56 @@ AnimaScript.prototype.spellCharacters = function() {
 				flag = true;	
 			} else {
 				window.clearInterval(interval);
+				if(callback)
+					callback();
 			}
 		}
 		
-	} else if(type == "r") {//reverse (type: r) from last character to the first
+	} else if(type == "r") {//reverse (type: r) spells from last character to the first
 		var index = 0;
 		var text = this.reversedText;
 		
 		window.setTimeout(function(){launchReverse();},delay);
 		
-		function launchReverse()
-		{
+		function launchReverse() {
 			element.style.visibility = "visible";
 			interval = window.setInterval(function(){spellReverse();},speed);
 		}
 		
-		function spellReverse()
-		{
+		function spellReverse() {
 			var character;
-			if(index <= text.length-1)
-			{
+			if(index <= text.length-1) {
 				character = text[index];
 				character.element.childNodes[character.nodeIndex].nodeValue = character.value + character.element.childNodes[character.nodeIndex].nodeValue;
 				index += 1;						
-			}
-			else
-			{
+			} else {
 				window.clearInterval(interval);
+				if(callback)
+					callback();
 			}
 		}
 		
-	} else {//normal (from first character to the last)
+	} else {//normal (spells from first character to the last)
 		var text = this.text;
 		var index = 0;
 												
 		window.setTimeout(function(){launchNormal();},delay);
 		
-		function launchNormal()
-		{
+		function launchNormal() {
 			element.style.visibility = "visible";
 			interval = window.setInterval(function(){spellNormal();},speed);
 		}
 		
-		function spellNormal()
-		{
+		function spellNormal() {
 			var character;
-			if(index <= text.length-1)
-			{
+			if(index <= text.length-1) {
 				character = text[index];
 				character.element.childNodes[character.nodeIndex].nodeValue += character.value;
 				index += 1;
-			}
-			else
-			{
+			} else {
 				window.clearInterval(interval);
+				if(callback)
+					callback();
 			}
 		}
 	}
@@ -213,9 +215,10 @@ AnimaScript.prototype.spellWords = function() {
 	var delay = this.delay;
 	var speed = this.duration/this.wordsCount;
 	var type = this.type;
+	var callback = this.callback;
 	var interval;
 			
-	if(type == "m") {//middle (type: m) : spells from
+	if(type == "m") {//middle (type: m) : spells from the middle
 		var text = this.text;
 		var index = Math.ceil(text.length/2)-1;//index backwards
 		var indexF = index + 1;//index forwards
@@ -225,10 +228,10 @@ AnimaScript.prototype.spellWords = function() {
 		
 		function launchMiddle() {
 			element.style.visibility = "visible";//visible before spelling
-			interval = window.setInterval(function(){spellMiddle();},speed);//speed*2 because both functions are launched together
+			interval = window.setInterval(function(){spellMiddle();},speed);
 		}
 		
-		function spellMiddle() {//both functions are launched together. 
+		function spellMiddle() {//theses two functions are launched alternatively
 			if(flag==true) {
 				spellMiddleBack();
 			} else {
@@ -246,9 +249,11 @@ AnimaScript.prototype.spellWords = function() {
 					flag = false;
 				} else {
 					window.clearInterval(interval);
+					if(callback)
+						callback();
 					break;
 				}
-			} while(character.value != " " && character.value != "\u00A0") 
+			} while(character.value != " " && character.value != "\u00A0")//spell until space 
 		}
 		
 		function spellMiddleForw() {
@@ -261,69 +266,65 @@ AnimaScript.prototype.spellWords = function() {
 					flag = true;	
 				} else {
 					window.clearInterval(interval);
+					if(callback)
+						callback();
 					break;
 				}
-			} while(character.value != " " && character.value != "\u00A0")
+			} while(character.value != " " && character.value != "\u00A0")//spell until space
 		}
 		
-	} else if(type == "r") {//reverse (type: r) from last character to the first
+	} else if(type == "r") {//reverse (type: r) spells from last character to the first
 		var index = 0;
 		var text = this.reversedText;
 		
 		window.setTimeout(function(){launchReverse();},delay);
 		
-		function launchReverse()
-		{
+		function launchReverse() {
 			element.style.visibility = "visible";
 			interval = window.setInterval(function(){spellReverse();},speed);
 		}
 		
-		function spellReverse()
-		{
+		function spellReverse() {
 			var character;
 			do {
-				if(index <= text.length-1)
-				{
+				if(index <= text.length-1) {
 					character = text[index];
 					character.element.childNodes[character.nodeIndex].nodeValue = character.value + character.element.childNodes[character.nodeIndex].nodeValue;
 					index += 1;						
-				}
-				else
-				{
+				} else {
 					window.clearInterval(interval);
+					if(callback)
+						callback();
 					break;
 				}
-			} while(character.value != " " && character.value != "\u00A0")
+			} while(character.value != " " && character.value != "\u00A0")//spell until space
 		}
 		
-	} else {//normal (from first character to the last)
+	} else {//normal (spells from first character to the last)
 		var text = this.text;
 		var index = 0;
 												
 		window.setTimeout(function(){launchNormal();},delay);
 		
-		function launchNormal()
-		{
+		function launchNormal() {
 			element.style.visibility = "visible";
 			interval = window.setInterval(function(){spellNormal();},speed);
 		}
 		
-		function spellNormal()
-		{
+		function spellNormal() {
 			var character;
 			do {
-				if(index <= text.length-1)
-				{
+				if(index <= text.length-1) {
 					character = text[index];
 					character.element.childNodes[character.nodeIndex].nodeValue += character.value;
 					index += 1;
-				}
-				else
-				{
+				} else {
 					window.clearInterval(interval);
+					if(callback)
+						callback();
 					break;
 				}
-			} while(character.value != " " && character.value != "\u00A0")
+			} while(character.value != " " && character.value != "\u00A0")//spell until space
 		}
 	}
 };
