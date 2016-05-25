@@ -1,0 +1,30 @@
+{
+  "name": "AnimaScript",
+  "version": "1.0.0",
+  "description": "Animation of the text content of HTML elements with JavaScript",
+  "main": "dist/animaScript.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/nagajurna/AnimaScript.git"
+  },
+  "keywords": [
+    "JavaScript",
+    "HTML",
+    "text",
+    "spell",
+    "animation"
+  ],
+  "author": "nagajurna",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nagajurna/AnimaScript/issues"
+  },
+  "homepage": "https://github.com/nagajurna/AnimaScript",
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-uglify": "^1.0.1"
+  }
+}
