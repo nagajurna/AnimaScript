@@ -357,7 +357,7 @@ AnimaScript.prototype.spellWords = function() {
 			} while(character.value != " " && character.value != "\u00A0")//spell until space
 		}
 		
-	} else {//normal (spells from first character to the last)
+	} else if(type == "n") {//normal (spells from first character to the last)
 		var text = this.text;
 		var index = 0;
 												
@@ -383,6 +383,8 @@ AnimaScript.prototype.spellWords = function() {
 				}
 			} while(character.value != " " && character.value != "\u00A0")//spell until space
 		}
+	} else {
+		throw new TypeError('Invalid AnimaScript() argument. Type must be n, r or m');
 	}
 };
 
