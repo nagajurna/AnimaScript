@@ -9,9 +9,8 @@ function AnimaScript(element,options) {
 	} else {
 		this.element = element;//HTML element
 	}
-	if(options!==undefined) {
-		//optional options : default values
-		options.unit===undefined//unit : c-haracter, w-ord (default 'c')
+	if(options!==undefined) {//optional options : default values
+		options.unit===undefined//unit : c-haracter, w-ord, a-ll (default 'c')
 		? this.unit = "c" 
 		: this.unit = options.unit;
 		
@@ -40,8 +39,10 @@ function AnimaScript(element,options) {
     
     this.text = this.getCharacters();//array of characters
     this.reversedText = this.getCharacters().reverse();//array of characters reversed
-    this.charactersCount = this.getCounts().characters;//characters count
-    this.wordsCount = this.getCounts().words;//words count
+    this.count = this.getCounts();
+    this.charactersCount = this.count.characters;//characters count
+    this.wordsCount = this.count.words;//words count
+    this.sentencesCount = this.count.sentences;
 }
 
 AnimaScript.prototype.setUnit = function(value) {
@@ -112,10 +113,13 @@ AnimaScript.prototype.getCounts = function() {//get array of characters
 	for(var i=0; i<nodes.length; i++) {
 		characterArray = characterArray.concat(nodes[i].value);
 	}
+	characterArray ? count.characters = characterArray.length : count.characters = 1;
 	count.characters = characterArray.length;//count characters
 	var string = characterArray.toString();
-	var array = string.match(/ |\u00A0/g);//count spaces
-	count.words = array.length+1;//count words = count spaces+1
+	var wordArray = string.match(/ |\u00A0/g);//matches spaces
+	wordArray ? count.words = wordArray.length+1 : count.words = 1;//count words = count spaces+1
+	var sentenceArray = string.match(/\u002E|\u2026/g);//matches '.' and &hellip;
+	sentenceArray ? count.sentences = sentenceArray.length : count.sentences = 1;//count sentences = count . and &hellip;
 	return count;
 };
     
@@ -388,13 +392,81 @@ AnimaScript.prototype.spellWords = function() {
 	}
 };
 
+AnimaScript.prototype.spellSentences = function() {
+	this.emptyNodes();
+	var element = this.element;
+	if(typeof this.delay === 'number') {
+		var delay = this.delay;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Delay must be a number');
+	}
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.sentencesCount;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Duration must be a number');
+	}
+	var type = this.type;
+	var callback = this.callback;
+	var interval;
+			
+	//normal (spells from first character to the last)
+	var text = this.text;
+	var index = 0;
+											
+	window.setTimeout(function(){launchNormal();},delay);
+	
+	function launchNormal() {
+		element.style.visibility = "visible";
+		interval = window.setInterval(function(){spellNormal();},speed);
+	}
+	
+	function spellNormal() {
+		var character;
+		do {
+			if(index <= text.length-1) {
+				character = text[index];
+				character.element.childNodes[character.nodeIndex].nodeValue += character.value;
+				index += 1;
+			} else {
+				window.clearInterval(interval);
+				if(callback)
+					callback();
+				break;
+			}
+		} while(character.value != "." && character.value != "\u2026")//spell until space
+	}
+};
+
+AnimaScript.prototype.spellAll = function() {
+	var element = this.element;
+	var callback = this.callback;
+	if(typeof this.delay === 'number') {
+		var delay = this.delay;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Delay must be a number');
+	}
+	var interval;
+	
+	element.style.visibility = 'hidden';
+	
+	window.setTimeout(function(){
+		element.style.visibility = 'visible';
+		if(callback)
+			callback();
+		},delay);
+}
+
 AnimaScript.prototype.spell = function() {
 	if(this.unit=="c") {
 		return this.spellCharacters();
 	} else if(this.unit=="w") {
 		return this.spellWords();
+	} else if(this.unit=="s") {
+		return this.spellSentences();
+	} else if(this.unit=="a") {
+		return this.spellAll();
 	} else {
-		throw new TypeError('Invalid AnimaScript() argument. unit must be c or w');
+		throw new TypeError('Invalid AnimaScript() argument. unit must be c, w, s or a');
 	}
 };
 
