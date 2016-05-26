@@ -1,34 +1,73 @@
 'use strict';
 
-function AnimaScript(options, callback) {
-    this.element = options.element;//HTML element
+function AnimaScript(element,options) {
+	//options.element required (type : HTML element)
+	if(element===undefined) {
+		throw new TypeError('Invalid AnimaScript() argument. Element must be defined');
+	} else if(!element.tagName) {
+		throw new TypeError('Invalid AnimaScript() argument. Element must be HTML element');
+	} else {
+		this.element = element;//HTML element
+	}
+	if(options!==undefined) {
+		//optional options : default values
+		options.unit===undefined//unit : c-haracter, w-ord (default 'c')
+		? this.unit = "c" 
+		: this.unit = options.unit;
+		
+		options.type===undefined//types : r-everse, m-iddle, n-ormal (default 'n')
+		? this.type = "n" 
+		: this.type = options.type;
+		
+		options.delay===undefined//delay before spelling (default 250)
+		? this.delay = 250 
+		: this.delay = options.delay;
+		
+		options.duration===undefined//duration of spelling (from which one gets speed) (default 1000)
+		? this.duration = 1000 
+		: this.duration = options.duration;
+		
+		options.callback===undefined|typeof options.callback!=='function'
+		? this.callback=null
+		: this.callback=callback;
+	} else {
+		this.unit = "c";
+		this.type = "n";
+		this.delay = 250;
+		this.duration = 1000;
+		this.callback=null;
+	}
     
-    options.unit===undefined//unit : c-haracter, w-ord (default 'c')
-    ? this.unit = "c" 
-    : this.unit = options.unit;
-	
-    options.type===undefined//types : r-everse, m-iddle, n-ormal (default 'n')
-    ? this.type = "n" 
-    : this.type = options.type;
-    
-    options.delay===undefined//delay before spelling (default 250)
-    ? this.delay = 250 
-    : this.delay = options.delay;
-    
-    options.duration===undefined//duration of spelling (from which one gets speed) (default 1000)
-    ? this.duration = 1000 
-    : this.duration = options.duration;
-    
-    callback==undefined
-    ? this.callback=null
-    : this.callback=callback;
-        
-    this.text = this.getCharacters();
-    this.reversedText = this.getCharacters().reverse();
-    this.charactersCount = this.getCounts().characters;
-    this.wordsCount = this.getCounts().words;
+    this.text = this.getCharacters();//array of characters
+    this.reversedText = this.getCharacters().reverse();//array of characters reversed
+    this.charactersCount = this.getCounts().characters;//characters count
+    this.wordsCount = this.getCounts().words;//words count
 }
 
+AnimaScript.prototype.setUnit = function(value) {
+	this.unit = value;
+	return this;
+}
+
+AnimaScript.prototype.setType = function(value) {
+	this.type = value;
+	return this;
+}
+
+AnimaScript.prototype.setDelay = function(value) {
+	this.delay = value;
+	return this;
+}
+
+AnimaScript.prototype.setDuration = function(value) {
+	this.duration = value;
+	return this;
+}
+
+AnimaScript.prototype.setCallback = function(value) {
+	this.callback = value;
+	return this;
+}
 
 AnimaScript.prototype.getTextNodes = function() {//get array of text nodes
 	var textNodes = [];//array to store text nodes
@@ -104,8 +143,16 @@ AnimaScript.prototype.emptyNodes = function() {//emptying nodes
 AnimaScript.prototype.spellCharacters = function() {
 	this.emptyNodes();
 	var element = this.element;
-	var delay = this.delay;
-	var speed = this.duration/this.charactersCount;
+	if(typeof this.delay === 'number') {
+		var delay = this.delay;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Delay must be a number');
+	}
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.charactersCount;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Duration must be a number');
+	}
 	var type = this.type;
 	var callback = this.callback;
 	var interval;
@@ -183,7 +230,7 @@ AnimaScript.prototype.spellCharacters = function() {
 			}
 		}
 		
-	} else {//normal (spells from first character to the last)
+	} else if(type == "n") {//normal (spells from first character to the last)
 		var text = this.text;
 		var index = 0;
 												
@@ -206,14 +253,24 @@ AnimaScript.prototype.spellCharacters = function() {
 					callback();
 			}
 		}
+	} else {
+		throw new TypeError('Invalid AnimaScript() argument. Type must be n, r or m');
 	}
 };
 
 AnimaScript.prototype.spellWords = function() {
 	this.emptyNodes();
 	var element = this.element;
-	var delay = this.delay;
-	var speed = this.duration/this.wordsCount;
+	if(typeof this.delay === 'number') {
+		var delay = this.delay;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Delay must be a number');
+	}
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.wordsCount;
+	} else {
+		throw new TypeError('Invalid Animascript() argument. Duration must be a number');
+	}
 	var type = this.type;
 	var callback = this.callback;
 	var interval;
@@ -334,11 +391,11 @@ AnimaScript.prototype.spell = function() {
 		return this.spellCharacters();
 	} else if(this.unit=="w") {
 		return this.spellWords();
+	} else {
+		throw new TypeError('Invalid AnimaScript() argument. unit must be c or w');
 	}
-}
-	
+};
 
-	
  
 	
 	
