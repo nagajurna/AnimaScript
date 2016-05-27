@@ -484,32 +484,33 @@ AnimaText.prototype.spell = function() {
 //speller object
 var speller = 
 {
-	getAnimatexts: function()//get animatexts in container/setOptions for each animatext/emptyNodes/push into array
+	getAnimatexts: function()//get animatexts from container/for each animatext : set options/emptyNodes/push into array
 	{
-		this.elements = this.container.querySelectorAll('[data-animascript]');
+		this.elements = this.container.querySelectorAll('[data-animatext]');
 		var array = [];
 				
 		for(var i=0; i<this.elements.length; i++) {
 			var animatext = {};
-			animatext.options = eval(this.elements[i].getAttribute("data-animascript"));
+			animatext.options = eval(this.elements[i].getAttribute("data-animatext"));
 			animatext.text = new AnimaText(this.elements[i],animatext.options);
+			animatext.text.emptyNodes();
 			array.push(animatext);
 		}
-		//console.log(this.animatexts);
+		
 		return array;
 	},
 	
-	sortAnimatexts: function(texts)//gets array (sorted by order) of arrays (each containing texts with same order)
+	sortAnimatexts: function(texts)//gets array (sorted by order) of arrays (bunch containing texts of same order)
 	{
 		var array = [];
 		var max=0;
-		for(i = 0; i<texts.length ; i++) {
+		for(i = 0; i<texts.length ; i++) {//in case of non consecutive order numbers : get max order number
 			texts[i].options.order > max ? max = texts[i].options.order : max = max;
 		}
 	
 		var i=0;
 	
-		while(i < max) {//tri des éléments
+		while(i < max) {//sort by order number and put texts of same order number together in same array (bunch)
 			var items = [];
 			
 			for(var j=0 ; j<texts.length; j++) {
@@ -528,7 +529,7 @@ var speller =
 		return array;
 	},
 	
-	longest: function(array)
+	longest: function(array)//for each bunch, find the longest in total duration (to which is attached function 'next')
 	{
 		var longest = array[0].text;
 		if(array.length > 1) {
@@ -543,19 +544,22 @@ var speller =
 	
 	launch: function(texts) 
 	{
-		//init function next for each longest of each array of animatexts grouped by order number
-		if(texts[0]) {
+		if(texts[0]) {//always deal with the first bunch of texts
 			var bunch = texts[0];
 			var longest = this.longest(bunch);
-			longest.next = function() {
-				speller.launch(texts);
+			longest.next = function() {//attach function 'next' to longest in total duration 
+				speller.launch(texts);//will call the next bunch
 			}
 				
-			for(var i=0; i<bunch.length; i++) {
-				bunch[i].text.spell();
+			for(var i=0; i<bunch.length; i++) {//launch animation the bunch
+				if(bunch[i].options.action=='spell') {
+					bunch[i].text.spell();
+				} else {
+					throw new TypeError('Invalid speller argument : action must be spell');
+				}
 			}
 			
-			texts.splice(0,1);	
+			texts.splice(0,1);//remove bunch dealt with	
 		}	
 	},
 	
