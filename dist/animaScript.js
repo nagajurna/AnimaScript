@@ -488,8 +488,6 @@ function Speller(container)	{
 
 	this.animatexts = this.getAnimatexts();
 	this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
-	this.queue = this.sortedAnimatexts.slice(0);
-	this.launch(this.queue);	
 }
 //get animatexts from container. For each animatext : set options/emptyNodes/push into array
 Speller.prototype.getAnimatexts = function() {
@@ -569,8 +567,6 @@ Speller.prototype.launch = function(texts) {
 }
 
 Speller.prototype.spell = function() {
-	this.animatexts = this.getAnimatexts();
-	this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
-	this.queue = this.sortedAnimatexts.slice(0);
-	this.launch(this.queue);
+	var queue = this.sortedAnimatexts.slice(0);
+	this.launch(queue);
 }
