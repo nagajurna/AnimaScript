@@ -481,107 +481,96 @@ AnimaText.prototype.spell = function() {
 	}
 };
 
-//speller object
-var speller = 
-{
-	getAnimatexts: function()//get animatexts from container/for each animatext : set options/emptyNodes/push into array
-	{
-		this.elements = this.container.querySelectorAll('[data-animatext]');
-		var array = [];
-				
-		for(var i=0; i<this.elements.length; i++) {
-			var animatext = {};
-			animatext.options = eval(this.elements[i].getAttribute("data-animatext"));
-			animatext.text = new AnimaText(this.elements[i],animatext.options);
-			animatext.text.emptyNodes();
-			array.push(animatext);
-		}
-		
-		return array;
-	},
-	
-	sortAnimatexts: function(texts)//gets array (sorted by order) of arrays (bunch containing texts of same order)
-	{
-		var array = [];
-		var max=0;
-		for(i = 0; i<texts.length ; i++) {//in case of non consecutive order numbers : get max order number
-			texts[i].options.order > max ? max = texts[i].options.order : max = max;
-		}
-	
-		var i=0;
-	
-		while(i < max) {//sort by order number and put texts of same order number together in same array (bunch)
-			var items = [];
+function Speller(container)	{
+	!container
+	? this.container = document.body
+	: this.container = container;
+
+	this.animatexts = this.getAnimatexts();
+	this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
+	this.queue = this.sortedAnimatexts.slice(0);
+	this.launch(this.queue);	
+}
+//get animatexts from container. For each animatext : set options/emptyNodes/push into array
+Speller.prototype.getAnimatexts = function() {
+	this.elements = this.container.querySelectorAll('[data-animatext]');
+	var array = [];
 			
-			for(var j=0 ; j<texts.length; j++) {
-				if(texts[j].options.order == i + 1) {
-					items.push(texts[j]);
-				}
-			}
-			
-			if(items.length > 0) {
-				array.push(items);
-			}
+	for(var i=0; i<this.elements.length; i++) {
+		var animatext = {};
+		animatext.options = eval(this.elements[i].getAttribute("data-animatext"));
+		animatext.text = new AnimaText(this.elements[i],animatext.options);
+		animatext.text.emptyNodes();
+		array.push(animatext);
+	}
+
+	return array;
+}
+//gets array (sorted by order) of arrays (bunches containing texts of same order)
+Speller.prototype.sortAnimatexts = function(texts) {
+	var array = [];
+	var max=0;
+	for(i = 0; i<texts.length ; i++) {//in case of non consecutive order numbers : get max order number
+		texts[i].options.order > max ? max = texts[i].options.order : max = max;
+	}
+
+	var i=0;
+
+	while(i < max) {//sort by order number and put texts of same order number together in same array (bunch)
+		var items = [];
 		
-			i++
+		for(var j=0 ; j<texts.length; j++) {
+			if(texts[j].options.order == i + 1) {
+				items.push(texts[j]);
+			}
 		}
 		
-		return array;
-	},
-	
-	longest: function(array)//for each bunch, find the longest in total duration (to which is attached function 'next')
-	{
-		var longest = array[0].text;
-		if(array.length > 1) {
-			for(var i=1 ; i<array.length ; i++) {
-				if(array[i].text.duration + array[i].text.delay > longest.duration + longest.delay) {
-					longest = array[i].text
-				}
-			}
+		if(items.length > 0) {
+			array.push(items);
 		}
-		return longest;
-	},
 	
-	launch: function(texts) 
-	{
-		if(texts[0]) {//always deal with the first bunch of texts
-			var bunch = texts[0];
-			var longest = this.longest(bunch);
-			longest.next = function() {//attach function 'next' to longest in total duration 
-				speller.launch(texts);//will call the next bunch
-			}
-				
-			for(var i=0; i<bunch.length; i++) {//launch animation the bunch
-				if(bunch[i].options.action=='spell') {
-					bunch[i].text.spell();
-				} else {
-					throw new TypeError('Invalid speller argument : action must be spell');
-				}
-			}
-			
-			texts.splice(0,1);//remove bunch dealt with	
-		}	
-	},
-	
-	spell: function(container)
-	{
-		!container
-		? this.container = document.body
-		: this.container = container;
-		
-		this.animatexts = this.getAnimatexts();
-		this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
-		this.queue = this.sortedAnimatexts.slice(0);
-		this.launch(this.queue);
+		i++
 	}
 	
-} 
-	
-	
+	return array;
+}
+//for each bunch, find the longest in total duration (to which is attached function 'next')
+Speller.prototype.longest = function(array) {
+	var longest = array[0].text;
+	if(array.length > 1) {
+		for(var i=1 ; i<array.length ; i++) {
+			if(array[i].text.duration + array[i].text.delay > longest.duration + longest.delay) {
+				longest = array[i].text
+			}
+		}
+	}
+	return longest;
+}
 
-	
+Speller.prototype.launch = function(texts) {
+	var instance = this;
+	if(texts[0]) {//always deal with the first bunch of texts
+		var bunch = texts[0];
+		var longest = this.longest(bunch);
+		longest.next = function() {//attach function 'next' to longest in total duration 
+			instance.launch(texts);//will call the next bunch
+		}
+			
+		for(var i=0; i<bunch.length; i++) {//launch animation the bunch
+			if(bunch[i].options.action=='spell') {
+				bunch[i].text.spell();
+			} else {
+				throw new TypeError('Invalid speller argument : action must be spell');
+			}
+		}
+		
+		texts.splice(0,1);//remove bunch dealt with	
+	}
+}
 
-
-
-
-
+Speller.prototype.spell = function() {
+	this.animatexts = this.getAnimatexts();
+	this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
+	this.queue = this.sortedAnimatexts.slice(0);
+	this.launch(this.queue);
+}
