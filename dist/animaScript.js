@@ -48,8 +48,6 @@ function AnimaText(element,options) {
     this.count = this.getCounts();
     //function callback for speller
     this.next = null;
-   
-    
 }
 
 AnimaText.prototype.setUnit = function(value) {
@@ -110,6 +108,7 @@ AnimaText.prototype.getCharacters = function() {//get array of characters
 			text.push(character);
 		}
 	}
+	
 	return text;//array of characters (each character is an object ; properties : parent element, nodeIndex, value)
 };
 
@@ -613,6 +612,7 @@ Speller.prototype.getAnimatexts = function() {
 Speller.prototype.sortAnimatexts = function(texts) {
 	var array = [];
 	var max=0;
+	
 	for(i = 0; i<texts.length ; i++) {//in case of non consecutive order numbers : get max order number
 		texts[i].options.order > max ? max = texts[i].options.order : max = max;
 	}
@@ -640,6 +640,7 @@ Speller.prototype.sortAnimatexts = function(texts) {
 //for each bunch, find the longest in total duration (to which is attached function 'next')
 Speller.prototype.longest = function(array) {
 	var longest = array[0].text;
+	
 	if(array.length > 1) {
 		for(var i=1 ; i<array.length ; i++) {
 			if(array[i].text.duration + array[i].text.delay > longest.duration + longest.delay) {
@@ -647,11 +648,13 @@ Speller.prototype.longest = function(array) {
 			}
 		}
 	}
+	
 	return longest;
 }
 
 Speller.prototype.launch = function(texts) {
 	var instance = this;
+	
 	if(texts[0]) {//always deal with the first bunch of texts
 		var bunch = texts[0];
 		var longest = this.longest(bunch);
@@ -673,7 +676,7 @@ Speller.prototype.launch = function(texts) {
 	}
 }
 
-Speller.prototype.spell = function() {
+Speller.prototype.start = function() {
 	this.queue = this.sortedAnimatexts.slice(0);
 	this.launch(this.queue);
 }
