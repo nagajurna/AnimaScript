@@ -1,6 +1,8 @@
 # AnimaScript
 Animate the text content of HTML elements with JavaScript
 
+(work in progress...)
+
 ## Start
 
 ### With Speller 
@@ -43,7 +45,7 @@ Animate the text content of HTML elements with JavaScript
 			<p>The <em>content</em> of the <strong>third</strong> element</p>
 		</div>
 
-* Create an instance of AnimaText and start
+* Create an instance of AnimaText in your js.file and start
 
 		var container = document.getElementById('container');
 		
