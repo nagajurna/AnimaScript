@@ -35,7 +35,7 @@ Animate the text content of HTML elements with JavaScript
 
 		<script src="animaScript.min.js"></script>
 		
-* Insert the data-animatext attribute in the HTML elements to animate
+* Insert HTML elements to animate
 
 		<div id="container">
 			<p>The <em>content</em> of the <strong>first</strong> element</p>
