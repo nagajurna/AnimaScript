@@ -123,15 +123,7 @@ AnimaText.prototype.getCharacters = function() {//get array of characters
 			text.push(character);
 		}
 	}
-	
-	//while (text[0].value.toString().match(/^\s+$/)) {
-			//text.shift();
-	//}
-	
-	//while (text[text.length-1].value.toString().match(/^\s+$/)) {
-			//text.pop();
-	//}
-	
+		
 	return text;//array of characters (each character is an object ; properties : parent element, nodeIndex, value)
 };
 
@@ -242,10 +234,10 @@ AnimaText.prototype.spellCharacters = function() {
 				if(next) { next(); }
 			}
 		}
-	} else if(type == "e") {
+	} else if(type == "e") {//extremities (type: e) : spells from extremities
 		var text = this.text;
 		var index1 = 0;//index first half
-		var index2 = text.length -1;//index forwards
+		var index2 = text.length -1;//index second half
 		var middle = Math.ceil(text.length/2)-1;
 		var array1 = [];
 		var array2 = [];
@@ -547,7 +539,73 @@ AnimaText.prototype.unspellCharacters = function() {
 	var next = this.next;
 	var interval;
 	
-	if(type == "r") {//normal (unspells from last character to the first)
+	if(type == "m") {//middle (type: m) : unspell from extremities to middle
+		var text = this.text;
+		var middle = Math.ceil(text.length/2);
+		var array1 = text.slice(0,middle);//array first half
+		var array2 = text.slice(middle);//array second half
+		var array = [];
+		var flag = true;
+		
+			
+							
+		window.setTimeout(function(){launchMiddle();},delay);
+		
+		function launchMiddle() {
+			element.style.visibility = "visible";//visible before spelling
+			interval = window.setInterval(function(){spellMiddle();},speed);
+		}
+		
+		function spellMiddle() {//theses two functions are launched alternatively 
+			if(flag==true) {
+				spellMiddle1();
+			} else {
+				spellMiddle2();
+			}
+		}
+		
+		function spellMiddle1() {
+			if(array1.pop() !== undefined) {
+				
+				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+				}				
+				array = array1.concat(array2);//concatenation of the 2 arrays
+				
+				for(var i=0; i<array.length; i++) {//nodes filled
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+				}
+				
+				flag = false;
+			} else {
+				window.clearInterval(interval);
+				if(callback) { callback(); }
+				if(next) { next(); }
+			}
+		}
+		
+		function spellMiddle2() {
+			if(array2.shift() !== undefined) {
+				
+				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+				}
+				
+				array = array1.concat(array2);//concatenation of the 2 arrays
+				
+				for(var i=0; i<array.length; i++) {//nodes filled
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+				}
+				
+				flag = true;	
+			} else {
+				window.clearInterval(interval);
+				if(callback) { callback(); }
+				if(next) { next(); }
+			}
+		}
+	
+	} else if(type == "r") {//normal (unspells from last character to the first)
 		
 		var index = 0;//starts with last node
 				
