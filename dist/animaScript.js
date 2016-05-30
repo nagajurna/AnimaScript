@@ -546,8 +546,70 @@ AnimaText.prototype.unspellCharacters = function() {
 		var array2 = text.slice(middle);//array second half
 		var array = [];
 		var flag = true;
+							
+		window.setTimeout(function(){launchMiddle();},delay);
 		
-			
+		function launchMiddle() {
+			element.style.visibility = "visible";//visible before spelling
+			interval = window.setInterval(function(){spellMiddle();},speed);
+		}
+		
+		function spellMiddle() {//theses two functions are launched alternatively 
+			if(flag==true) {
+				spellMiddle1();
+			} else {
+				spellMiddle2();
+			}
+		}
+		
+		function spellMiddle1() {
+			if(array1.shift() !== undefined) {
+				
+				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+				}				
+				array = array1.concat(array2);//concatenation of the 2 arrays
+				
+				for(var i=0; i<array.length; i++) {//nodes filled
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+				}
+				
+				flag = false;
+			} else {
+				window.clearInterval(interval);
+				if(callback) { callback(); }
+				if(next) { next(); }
+			}
+		}
+		
+		function spellMiddle2() {
+			if(array2.pop() !== undefined) {
+				
+				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+				}
+				
+				array = array1.concat(array2);//concatenation of the 2 arrays
+				
+				for(var i=0; i<array.length; i++) {//nodes filled
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+				}
+				
+				flag = true;	
+			} else {
+				window.clearInterval(interval);
+				if(callback) { callback(); }
+				if(next) { next(); }
+			}
+		}
+	
+	} else if(type == "e") {//middle (type: e) : unspell from middle to extremities
+		var text = this.text;
+		var middle = Math.ceil(text.length/2);
+		var array1 = text.slice(0,middle);//array first half
+		var array2 = text.slice(middle);//array second half
+		var array = [];
+		var flag = true;
 							
 		window.setTimeout(function(){launchMiddle();},delay);
 		
@@ -665,7 +727,7 @@ AnimaText.prototype.unspellCharacters = function() {
 		}
 	
 	} else {
-		throw new TypeError('Invalid AnimaText() argument : type must be n, r or m');
+		throw new TypeError('Invalid AnimaText() argument : type must be n, r, m or e');
 	}
 }
 
