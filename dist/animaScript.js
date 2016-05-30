@@ -9,12 +9,17 @@ function AnimaText(element,options) {
 	} else {
 		this.element = element;//HTML element
 	}
+	
+	//remove tab/spaces/newline at the beginning/end element
+	//replace repeated tab/spaces/newline by a single space
+	this.element.innerHTML = this.element.innerHTML.replace(/^\s*|\s(?=\s)|\s*$/g, "");
+	
 	if(options!==undefined) {//optional options : default values
 		options.unit===undefined//unit : c-haracter, w-ord, s-entence, a-ll (default 'c')
 		? this.unit = "c" 
 		: this.unit = options.unit;
 		
-		options.type===undefined//types : r-everse, m-iddle, e-xtremities, n-ormal (default 'n')
+		options.type===undefined//types : r-everse, m-iddle, n-ormal (default 'n')
 		? this.type = "n" 
 		: this.type = options.type;
 		
@@ -108,6 +113,14 @@ AnimaText.prototype.getCharacters = function() {//get array of characters
 			text.push(character);
 		}
 	}
+	
+	//while (text[0].value.toString().match(/^\s+$/)) {
+			//text.shift();
+	//}
+	
+	//while (text[text.length-1].value.toString().match(/^\s+$/)) {
+			//text.pop();
+	//}
 	
 	return text;//array of characters (each character is an object ; properties : parent element, nodeIndex, value)
 };
@@ -268,6 +281,8 @@ AnimaText.prototype.spellCharacters = function() {
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, or m');
 	}
+	
+	
 };
 
 AnimaText.prototype.spellWords = function() {
