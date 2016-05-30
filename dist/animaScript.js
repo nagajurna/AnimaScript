@@ -19,7 +19,7 @@ function AnimaText(element,options) {
 		? this.unit = "c" 
 		: this.unit = options.unit;
 		
-		options.type===undefined//types : r-everse, m-iddle, n-ormal (default 'n')
+		options.type===undefined//types : r-everse, m-iddle, e-xtremities, n-ormal (default 'n')
 		? this.type = "n" 
 		: this.type = options.type;
 		
@@ -199,7 +199,7 @@ AnimaText.prototype.spellCharacters = function() {
 		var index1 = Math.ceil(text.length/2)-1;//index backwards
 		var index2 = index1 + 1;//index forwards
 		var flag = true;
-					
+							
 		window.setTimeout(function(){launchMiddle();},delay);
 		
 		function launchMiddle() {
@@ -242,7 +242,74 @@ AnimaText.prototype.spellCharacters = function() {
 				if(next) { next(); }
 			}
 		}
-	
+	} else if(type == "e") {
+		var text = this.text;
+		var index1 = 0;//index first half
+		var index2 = text.length -1;//index forwards
+		var middle = Math.ceil(text.length/2)-1;
+		var array1 = [];
+		var array2 = [];
+		var array = [];
+		
+		var flag = true;
+		
+		window.setTimeout(function(){launchExt();},delay);
+		
+		function launchExt() {
+			element.style.visibility = "visible";//visible before spelling
+			interval = window.setInterval(function(){spellExt();},speed);
+		}
+		
+		function spellExt() {//theses two functions are launched alternatively 
+			if(flag==true) {
+				spellExt1();
+			} else {
+				spellExt2();
+			}
+		}
+		
+		function spellExt1() {
+			var c;//character
+			if(index1 <= middle) {
+				c = text[index1];
+				array1.push(c);
+				array = array1.concat(array2);//concatenation of the 2 arrays
+				for(var i=0; i<array.length; i++) {//nodes emptied
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+				}
+				for(var i=0; i<array.length; i++) {//nodes filled
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+				}
+				index1 += 1;
+				flag = false;
+			} else {
+				window.clearInterval(interval);
+				if(callback) { callback(); }
+				if(next) { next(); }
+			}
+		}
+		
+		function spellExt2() {
+			var c;//character
+			if(index2 > middle) {
+				c = text[index2];
+				array2.unshift(c);
+				array = array1.concat(array2);//concatenation of the 2 arrays
+				for(var i=0; i<array.length; i++) {//nodes emptied
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+				}
+				for(var i=0; i<array.length; i++) {//nodes filled
+					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+				}
+				index2 -= 1;
+				flag = true;	
+			} else {
+				window.clearInterval(interval);
+				if(callback) { callback(); }
+				if(next) { next(); }
+			}
+		}
+		
 	} else if(type == "r") {//reverse (type: r) spells from last character to the first
 		var index = 0;
 		var text = this.reversedText;
@@ -290,7 +357,7 @@ AnimaText.prototype.spellCharacters = function() {
 			}
 		}
 	} else {
-		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, or m');
+		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
 	
 	
