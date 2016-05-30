@@ -39,6 +39,10 @@ function AnimaText(element,options) {
 		? this.order = 1 
 		: this.order = options.order;
 		
+		options.freezeSize===undefined//order of animatexts (for speller)
+		? this.freezeSize = false 
+		: this.freezeSize = options.freezeSize;
+		
 	} else {
 		this.unit = "c";
 		this.type = "n";
@@ -46,6 +50,7 @@ function AnimaText(element,options) {
 		this.duration = 1000;
 		this.callback = null;
 		this.order = 1;
+		this.freezeSize = false;
 	}
     
     this.text = this.getCharacters();//array of characters
@@ -77,6 +82,11 @@ AnimaText.prototype.setDuration = function(value) {
 
 AnimaText.prototype.setCallback = function(value) {
 	this.callback = value;
+	return this;
+}
+
+AnimaText.prototype.freezeSize = function(value) {
+	this.freezeSize = value;
 	return this;
 }
 
@@ -158,7 +168,8 @@ AnimaText.prototype.setSize = function() {
 };
     
 AnimaText.prototype.emptyNodes = function() {//emptying nodes
-	this.setSize();
+	if(this.freezeSize===true)
+		this.setSize();
 	var nodes = this.getTextNodes();
 	for(var i=0; i < nodes.length; i++) {//each node emptied (nodeValue = "")
 		nodes[i].parent.childNodes[nodes[i].index].nodeValue = "";
@@ -409,7 +420,8 @@ AnimaText.prototype.spellSentences = function() {
 
 AnimaText.prototype.spellAll = function() {
 	//no empty nodes
-	this.setSize();
+	if(this.freezeSize===true)
+		this.setSize();
 	var element = this.element;
 	if(typeof this.duration === 'number') {
 		var duration = this.duration;
@@ -449,7 +461,8 @@ AnimaText.prototype.spell = function() {
 };
 
 AnimaText.prototype.unspellCharacters = function() {
-	this.setSize();
+	if(this.freezeSize===true)
+		this.setSize();
 	var nodes = this.getTextNodes().slice(0);
 	var element = this.element;
 	if(typeof this.delay === 'number') {
@@ -532,7 +545,8 @@ AnimaText.prototype.unspellCharacters = function() {
 }
 
 AnimaText.prototype.unspellWords = function() {
-	this.setSize();
+	if(this.freezeSize===true)
+		this.setSize();
 	var nodes = this.getTextNodes().slice(0);
 	var element = this.element;
 	if(typeof this.delay === 'number') {
