@@ -767,64 +767,6 @@ AnimaText.prototype.resume = function() {//start, no init
  ********************************************************************************************
  */
 
-AnimaText.prototype.unspellWords = function() {
-	if(this.freezeSize===true)
-		this.setSize();
-	var nodes = this.getTextNodes().slice(0);
-	var element = this.element;
-	if(typeof this.delay === 'number') {
-		var delay = this.delay;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
-	}
-	if(typeof this.duration === 'number') {
-		var speed = this.duration/this.count.words;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
-	}
-	var type = this.type;
-	var callback = this.callback;
-	var next = this.next;
-	var interval;
-	
-	//normal (unspells from last character to the first)
-		
-	var index = nodes.length-1;
-	var node = nodes[index];
-	window.setTimeout(function(){launchNormal();},delay);
-	
-	function launchNormal() {
-		element.style.visibility = "visible";
-		interval = window.setInterval(function(){unspellNormal();},speed);
-	}
-	
-	function unspellNormal() {
-		if(index >=0) {
-			var node = nodes[index];
-			var parent=node.parent;
-			var nodeIndex = node.index;
-			var value = node.nodeValue;
-			var character;
-
-			do {
-				if(node.value.length > 0) {
-					parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(0,-1);
-					character = node.value.splice(-1,1);//in order to evaluate while condition and if condition
-				} else {
-					index-=1;
-					break;
-				}
-			} while(character != " " && character.value != "\u00A0")
-					
-		} else {
-			window.clearInterval(interval);
-			if(callback) { callback(); }
-			if(next) { next(); }
-		}
-	}
-}
-
-
 function Speller(container)	{
 	!container
 	? this.container = document.body
