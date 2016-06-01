@@ -39,8 +39,12 @@ function AnimaText(element,options) {
 		? this.order = 1 
 		: this.order = options.order;
 		
+		options.action===undefined//order of animatexts (for speller)
+		? this.action = null 
+		: this.action = options.action;
+		
 		options.freezeSize===undefined//order of animatexts (for speller)
-		? this.freezeSize = false 
+		? this.freezeSize = true 
 		: this.freezeSize = options.freezeSize;
 		
 	} else {
@@ -50,7 +54,8 @@ function AnimaText(element,options) {
 		this.duration = 1000;
 		this.callback = null;
 		this.order = 1;
-		this.freezeSize = false;
+		this.action = null;
+		this.freezeSize = true;
 	}
     
     this.text = this.getCharacters();//array of characters
@@ -58,6 +63,7 @@ function AnimaText(element,options) {
     this.count = this.getCounts();
     //function callback for speller
     this.next = null;
+    //this.action = null;
 }
 
 AnimaText.prototype.setUnit = function(value) {
@@ -85,7 +91,7 @@ AnimaText.prototype.setCallback = function(value) {
 	return this;
 }
 
-AnimaText.prototype.freezeSize = function(value) {
+AnimaText.prototype.setFreezeSize = function(value) {
 	this.freezeSize = value;
 	return this;
 }
@@ -167,569 +173,599 @@ AnimaText.prototype.emptyNodes = function() {//emptying nodes
 		nodes[i].parent.childNodes[nodes[i].index].nodeValue = "";
 	}
 };
-		
-AnimaText.prototype.spellCharacters = function() {
-	this.emptyNodes();
-	var element = this.element;
-	if(typeof this.delay === 'number') {
-		var delay = this.delay;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
-	}
+/*
+ ********************SPELL CHARACTERS************************************************************************
+ */		
+AnimaText.prototype.spellCharacters = function() {// init, start
 	if(typeof this.duration === 'number') {
 		var speed = this.duration/this.count.characters;
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
 	}
-	var type = this.type;
-	var callback = this.callback;
-	var next = this.next;
-	var interval;
-			
-	if(type == "m") {//middle (type: m) : spells from the middle
-		var text = this.text;
-		var index1 = Math.ceil(text.length/2)-1;//index backwards
-		var index2 = index1 + 1;//index forwards
-		var flag = true;
-							
-		window.setTimeout(function(){launchMiddle();},delay);
-		
-		function launchMiddle() {
-			element.style.visibility = "visible";//visible before spelling
-			interval = window.setInterval(function(){spellMiddle();},speed);
-		}
-		
-		function spellMiddle() {//theses two functions are launched alternatively 
-			if(flag==true) {
-				spellMiddleBack();
-			} else {
-				spellMiddleForw();
-			}
-		}
-		
-		function spellMiddleBack() {
-			var c;//character
-			if(index1 >= 0) {
-				c = text[index1];
-				c.element.childNodes[c.nodeIndex].nodeValue = c.value + c.element.childNodes[c.nodeIndex].nodeValue;
-				index1 -= 1;
-				flag = false;
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-		
-		function spellMiddleForw() {
-			var c;//character
-			if(index2 <= text.length-1) {
-				c = text[index2];
-				c.element.childNodes[c.nodeIndex].nodeValue += c.value;
-				index2 += 1;
-				flag = true;	
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-	} else if(type == "e") {//extremities (type: e) : spells from extremities
-		var text = this.text;
-		var index1 = 0;//index first half
-		var index2 = text.length -1;//index second half
-		var middle = Math.ceil(text.length/2)-1;
-		var array1 = [];
-		var array2 = [];
-		var array = [];
-		
-		var flag = true;
-		
-		window.setTimeout(function(){launchExt();},delay);
-		
-		function launchExt() {
-			element.style.visibility = "visible";//visible before spelling
-			interval = window.setInterval(function(){spellExt();},speed);
-		}
-		
-		function spellExt() {//theses two functions are launched alternatively 
-			if(flag==true) {
-				spellExt1();
-			} else {
-				spellExt2();
-			}
-		}
-		
-		function spellExt1() {
-			var c;//character
-			if(index1 <= middle) {
-				c = text[index1];
-				array1.push(c);
-				array = array1.concat(array2);//concatenation of the 2 arrays
-				for(var i=0; i<array.length; i++) {//nodes emptied
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
-				}
-				for(var i=0; i<array.length; i++) {//nodes filled
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
-				}
-				index1 += 1;
-				flag = false;
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-		
-		function spellExt2() {
-			var c;//character
-			if(index2 > middle) {
-				c = text[index2];
-				array2.unshift(c);
-				array = array1.concat(array2);//concatenation of the 2 arrays
-				for(var i=0; i<array.length; i++) {//nodes emptied
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
-				}
-				for(var i=0; i<array.length; i++) {//nodes filled
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
-				}
-				index2 -= 1;
-				flag = true;	
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-		
-	} else if(type == "r") {//reverse (type: r) spells from last character to the first
-		var index = 0;
-		var text = this.reversedText;
-		
-		window.setTimeout(function(){launchReverse();},delay);
-		
-		function launchReverse() {
-			element.style.visibility = "visible";
-			interval = window.setInterval(function(){spellReverse();},speed);
-		}
-		
-		function spellReverse() {
-			var c;//character
-			if(index <= text.length-1) {
-				c = text[index];
-				c.element.childNodes[c.nodeIndex].nodeValue = c.value + c.element.childNodes[c.nodeIndex].nodeValue;
-				index += 1;						
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }			}
-		}
-		
-	} else if(type == "n") {//normal (spells from first character to the last)
-		var text = this.text;
-		var index = 0;
-												
-		window.setTimeout(function(){launchNormal();},delay);
-		
-		function launchNormal() {
-			element.style.visibility = "visible";
-			interval = window.setInterval(function(){spellNormal();},speed);
-		}
-		
-		function spellNormal() {
-			var c;//character
-			if(index <= text.length-1) {
-				c = text[index];
-				c.element.childNodes[c.nodeIndex].nodeValue += c.value;
-				index += 1;
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
+	this.emptyNodes();
+	this.element.style.visibility = "visible";
+	if(this.type == 'n') {
+		this._index = 0;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellCharactersN.call(t);},speed);
+	} else if(this.type == 'r') {
+		this._index = 0;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellCharactersR.call(t);},speed);
+	} else if(this.type == 'm') {
+		this._index1 = Math.ceil(this.text.length/2)-1;//index first half (backwards)
+		this._index2 = Math.ceil(this.text.length/2);//index second half (forward)
+		this._flag = true;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellCharactersM.call(t);},speed);
+	} else if(this.type == 'e') {
+		this._index1 = 0;//index first half
+		this._index2 = this.text.length -1;//index second half
+		this._middle = Math.ceil(this.text.length/2)-1;
+		this._array1 = [];
+		this._array2 = [];
+		this._flag = true;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellCharactersE.call(t);},speed);
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
-	
-	
-};
-
-AnimaText.prototype.spellWords = function() {
-	this.emptyNodes();
-	var element = this.element;
-	if(typeof this.delay === 'number') {
-		var delay = this.delay;
+}
+//spellNormal (type: n) : spells from first character to the last
+AnimaText.prototype.spellCharactersN = function() {
+	var c;//character
+	if(this._index <= this.text.length-1) {
+		c = this.text[this._index];
+		c.element.childNodes[c.nodeIndex].nodeValue += c.value;
+		this._index += 1;
 	} else {
-		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
+		window.clearInterval(this.interval);
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
 	}
+}
+//spellReverse (type: r) : spells from last character to the first
+AnimaText.prototype.spellCharactersR = function() {
+	var c;//character
+	if(this._index <= this.reversedText.length-1) {
+		c = this.reversedText[this._index];
+		c.element.childNodes[c.nodeIndex].nodeValue = c.value + c.element.childNodes[c.nodeIndex].nodeValue;
+		this._index += 1;						
+	} else {
+		window.clearInterval(this.interval);
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
+	}
+}
+//spellMiddle (type: m) : spells from the middle to the extremities
+AnimaText.prototype.spellCharactersM = function() {
+	if(this._flag==true) {//first half (backwards)
+		var c1;//character
+		if(this._index1 >= 0) {
+			c1 = this.text[this._index1];
+			c1.element.childNodes[c1.nodeIndex].nodeValue = c1.value + c1.element.childNodes[c1.nodeIndex].nodeValue;
+			this._index1 -= 1;
+			this._flag = false;
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	} else {//second half (forwards)
+		var c2;//character
+		if(this._index2 <= this.text.length-1) {
+			c2 = this.text[this._index2];
+			c2.element.childNodes[c2.nodeIndex].nodeValue += c2.value;
+			this._index2 += 1;
+			this._flag = true;	
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	}
+}
+//spellExt (type: e) : spells from the extremities to the middle
+AnimaText.prototype.spellCharactersE = function() {
+	var array = [];
+	if(this._flag==true) {//first half
+		var c1;//character
+		if(this._index1 <= this._middle) {
+			c1 = this.text[this._index1];
+			this._array1.push(c1);
+			array = this._array1.concat(this._array2);//concatenation of the 2 arrays
+			for(var i=0; i<array.length; i++) {//nodes emptied
+				array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+			}
+			for(var i=0; i<array.length; i++) {//nodes filled
+				array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+			}
+			this._index1 += 1;
+			this._flag = false;
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	} else {//second half
+		var c2;//character
+		if(this._index2 > this._middle) {
+			c2 = this.text[this._index2];
+			this._array2.unshift(c2);
+			array = this._array1.concat(this._array2);//concatenation of the 2 arrays
+			for(var i=0; i<array.length; i++) {//nodes emptied
+				array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
+			}
+			for(var i=0; i<array.length; i++) {//nodes filled
+				array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
+			}
+			this._index2 -= 1;
+			this._flag = true;	
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	}
+}
+/*
+ ********************SPELL WORDS************************************************************************
+ */	
+AnimaText.prototype.spellWords = function() {//init, start
 	if(typeof this.duration === 'number') {
 		var speed = this.duration/this.count.words;
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
 	}
-	var type = this.type;
-	var callback = this.callback;
-	var next = this.next;
-	var interval;
-			
-	if(type == "r") {//reverse (type: r) spells from last character to the first
-		var index = 0;
-		var text = this.reversedText;
-		
-		window.setTimeout(function(){launchReverse();},delay);
-		
-		function launchReverse() {
-			element.style.visibility = "visible";
-			interval = window.setInterval(function(){spellReverse();},speed);
-		}
-		
-		function spellReverse() {
-			var c;//character
-			do {
-				if(index <= text.length-1) {
-					c = text[index];
-					c.element.childNodes[c.nodeIndex].nodeValue = c.value + c.element.childNodes[c.nodeIndex].nodeValue;
-					index += 1;						
-				} else {
-					window.clearInterval(interval);
-					if(callback) { callback(); }
-					if(next) { next(); }
-					break;
-				}
-			} while(c.value != " " && c.value != "\u00A0")//spell until space
-		}
-		
-	} else if(type == "n") {//normal (spells from first character to the last)
-		var text = this.text;
-		var index = 0;
-												
-		window.setTimeout(function(){launchNormal();},delay);
-		
-		function launchNormal() {
-			element.style.visibility = "visible";
-			interval = window.setInterval(function(){spellNormal();},speed);
-		}
-		
-		function spellNormal() {
-			var c;//character
-			do {
-				if(index <= text.length-1) {
-					c = text[index];
-					c.element.childNodes[c.nodeIndex].nodeValue += c.value;
-					index += 1;
-				} else {
-					window.clearInterval(interval);
-					if(callback) { callback(); }
-					if(next) { next(); }
-					break;
-				}
-			} while(c.value != " " && c.value != "\u00A0")//spell until space
-		}
+	this.emptyNodes();
+	this.element.style.visibility = "visible";
+	if(this.type == 'n') {
+		this.index = 0;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellWordsN.call(t);},speed);
+	} else if(this.type == 'r') {
+		this.index = 0;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellWordsR.call(t);},speed);
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
 	}
-};
+} 
 
-AnimaText.prototype.spellSentences = function() {
-	this.emptyNodes();
-	var element = this.element;
-	if(typeof this.delay === 'number') {
-		var delay = this.delay;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
-	}
+AnimaText.prototype.spellWordsN = function() {
+	var c;//character
+	do {
+		if(this.index <= this.text.length-1) {
+			c = this.text[this.index];
+			c.element.childNodes[c.nodeIndex].nodeValue += c.value;
+			this.index += 1;
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+			break;
+		}
+	} while(c.value != " " && c.value != "\u00A0")//spell until space
+}
+
+AnimaText.prototype.spellWordsR = function() {
+	var c;//character
+	do {
+		if(this.index <= this.reversedText.length-1) {
+			c = this.reversedText[this.index];
+			c.element.childNodes[c.nodeIndex].nodeValue = c.value + c.element.childNodes[c.nodeIndex].nodeValue;
+			this.index += 1;						
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+			break;
+		}
+	} while(c.value != " " && c.value != "\u00A0")//spell until space
+}
+
+/*
+ ********************SPELL SENTENCES************************************************************************
+ */
+ 
+AnimaText.prototype.spellSentences = function() {//init, start
 	if(typeof this.duration === 'number') {
 		var speed = this.duration/this.count.sentences;
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
 	}
-	var type = this.type;
-	var callback = this.callback;
-	var next = this.next;
-	var interval;
-			
-	//normal (spells from first character to the last)
-	var text = this.text;
-	var index = 0;
-											
-	window.setTimeout(function(){launchNormal();},delay);
-	
-	function launchNormal() {
-		element.style.visibility = "visible";
-		interval = window.setInterval(function(){spellNormal();},speed);
+	this.emptyNodes();
+	this.element.style.visibility = "visible";
+	if(this.type == 'n') {
+		this.index = 0;
+		var t = this;
+		this.interval = window.setInterval(function(){t.spellSentencesN.call(t);},speed);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : if unit = s, type must be n');
 	}
-	
-	function spellNormal() {
-		var c;//character
-		do {
-			if(index <= text.length-1) {
-				c = text[index];
-				c.element.childNodes[c.nodeIndex].nodeValue += c.value;
-				index += 1;
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-				break;
-			}
-		} while(c.value != "." && c.value != "\u2026" && c.value != "\u003F" && c.value != "\u0021")//spell until full stop, hellip, ? et !
-	}
-};
+} 
 
-AnimaText.prototype.spellAll = function() {
-	//no empty nodes
-	if(this.freezeSize===true)
-		this.setSize();
-	var element = this.element;
-	if(typeof this.duration === 'number') {
-		var duration = this.duration;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
-	}
-	if(typeof this.delay === 'number') {
-		var delay = this.delay + this.duration;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
-	}
-	var callback = this.callback;
-	var next = this.next;
-	var interval;
-	
-	element.style.visibility = 'hidden';
-	
-	window.setTimeout(function(){
-		element.style.visibility = 'visible';
-		if(callback) { callback(); }
-		if(next) { next(); }
-		},delay);
+AnimaText.prototype.spellSentencesN = function() {
+	var c;//character
+	do {
+		if(this.index <= this.text.length-1) {
+			c = this.text[this.index];
+			c.element.childNodes[c.nodeIndex].nodeValue += c.value;
+			this.index += 1;
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+			break;
+		}
+	} while(c.value != "." && c.value != "\u2026" && c.value != "\u003F" && c.value != "\u0021")//spell until full stop, hellip, ? et !
 }
 
+ 
+ /*
+ ********************SPELL ALL********************************************************************
+ */	
+AnimaText.prototype.spellAll = function() {//init, start
+	//no empty nodes
+	this.element.style.visibility = 'hidden';
+	var t = this;
+	window.setTimeout(function(){
+		t.element.style.visibility = 'visible';
+		if(t.callback) { t.callback(); }
+		if(t.next) { t.next(); }
+		},t.delay);
+} 
+ 
+/*
+ ********************SPELL************************************************************************
+ */
 AnimaText.prototype.spell = function() {
-	if(this.unit=="c") {
-		return this.spellCharacters();
-	} else if(this.unit=="w") {
-		return this.spellWords();
-	} else if(this.unit=="s") {
-		return this.spellSentences();
-	} else if(this.unit=="a") {
-		return this.spellAll();
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : unit must be c, w, s or a');
-	}
-};
-
-AnimaText.prototype.unspellCharacters = function() {
-	if(this.freezeSize===true)
-		this.setSize();
-	var nodes = this.getTextNodes().slice(0);
-	var element = this.element;
+	this.action = 'spell';
 	if(typeof this.delay === 'number') {
 		var delay = this.delay;
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
 	}
+	
+	if(this.unit=="c") {
+		var t = this;										
+		window.setTimeout(function(){t.spellCharacters();},t.delay);
+	} else if(this.unit=="w") {
+		var t = this;										
+		window.setTimeout(function(){t.spellWords();},t.delay);
+	} else if(this.unit=="s") {
+		var t = this;										
+		window.setTimeout(function(){t.spellSentences();},t.delay);
+	} else if(this.unit=="a") {
+		return this.spellAll();
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : unit must be c, w, s or a');
+	}
+}; 
+
+/*
+ ********************UNSPELL CHARACTERS**************************************************************
+ */
+
+AnimaText.prototype.unspellCharacters = function() {//init, start
 	if(typeof this.duration === 'number') {
 		var speed = this.duration/this.count.characters;
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
 	}
-	var type = this.type;
-	var callback = this.callback;
-	var next = this.next;
-	var interval;
-	
-	if(type == "m") {//middle (type: m) : unspell from extremities to middle
-		var text = this.text;
-		var middle = Math.ceil(text.length/2);
-		var array1 = text.slice(0,middle);//array first half
-		var array2 = text.slice(middle);//array second half
-		var array = [];
-		var flag = true;
-							
-		window.setTimeout(function(){launchMiddle();},delay);
-		
-		function launchMiddle() {
-			element.style.visibility = "visible";//visible before spelling
-			interval = window.setInterval(function(){spellMiddle();},speed);
-		}
-		
-		function spellMiddle() {//theses two functions are launched alternatively 
-			if(flag==true) {
-				spellMiddle1();
-			} else {
-				spellMiddle2();
-			}
-		}
-		
-		function spellMiddle1() {
-			if(array1.shift() !== undefined) {
-				
-				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
-				}				
-				array = array1.concat(array2);//concatenation of the 2 arrays
-				
-				for(var i=0; i<array.length; i++) {//nodes filled
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
-				}
-				
-				flag = false;
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-		
-		function spellMiddle2() {
-			if(array2.pop() !== undefined) {
-				
-				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
-				}
-				
-				array = array1.concat(array2);//concatenation of the 2 arrays
-				
-				for(var i=0; i<array.length; i++) {//nodes filled
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
-				}
-				
-				flag = true;	
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-	
-	} else if(type == "e") {//middle (type: e) : unspell from middle to extremities
-		var text = this.text;
-		var middle = Math.ceil(text.length/2);
-		var array1 = text.slice(0,middle);//array first half
-		var array2 = text.slice(middle);//array second half
-		var array = [];
-		var flag = true;
-							
-		window.setTimeout(function(){launchMiddle();},delay);
-		
-		function launchMiddle() {
-			element.style.visibility = "visible";//visible before spelling
-			interval = window.setInterval(function(){spellMiddle();},speed);
-		}
-		
-		function spellMiddle() {//theses two functions are launched alternatively 
-			if(flag==true) {
-				spellMiddle1();
-			} else {
-				spellMiddle2();
-			}
-		}
-		
-		function spellMiddle1() {
-			if(array1.pop() !== undefined) {
-				
-				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
-				}				
-				array = array1.concat(array2);//concatenation of the 2 arrays
-				
-				for(var i=0; i<array.length; i++) {//nodes filled
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
-				}
-				
-				flag = false;
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-		
-		function spellMiddle2() {
-			if(array2.shift() !== undefined) {
-				
-				for(var i=0; i<array.length; i++) {//nodes emptied (previous concatenation)
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue = "";
-				}
-				
-				array = array1.concat(array2);//concatenation of the 2 arrays
-				
-				for(var i=0; i<array.length; i++) {//nodes filled
-					array[i].element.childNodes[array[i].nodeIndex].nodeValue += array[i].value;
-				}
-				
-				flag = true;	
-			} else {
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-	
-	} else if(type == "r") {//normal (unspells from last character to the first)
-		
-		var index = 0;//starts with last node
-				
-		window.setTimeout(function(){launchReverse();},delay);
-		
-		function launchReverse() {
-			element.style.visibility = "visible";
-			interval = window.setInterval(function(){unspellReverse();},speed);
-		}
-		
-		function unspellReverse() {
-			if(index <= nodes.length-1) {//if a node is left
-				var node = nodes[index];
-				var parent = node.parent;
-				var nodeIndex = node.index;
-				var value = node.nodeValue;
-				if(parent.childNodes[nodeIndex].nodeValue.length > 0) {//if node not empty
-					parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(1,parent.childNodes[nodeIndex].nodeValue.length);
-				} else {//else previous node
-					index+=1;
-				}
-			} else {//else clear
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-	
-	} else if(type == "n") {//normal (unspells from last character to the first)
-	
-		var index = nodes.length-1;//starts with last node
-		var node = nodes[index];
-		
-		window.setTimeout(function(){launchNormal();},delay);
-		
-		function launchNormal() {
-			element.style.visibility = "visible";
-			interval = window.setInterval(function(){unspellNormal();},speed);
-		}
-		
-		function unspellNormal() {
-			if(index >=0) {//if a node is left
-				var node = nodes[index];
-				var parent=node.parent;
-				var nodeIndex = node.index;
-				var value = node.nodeValue;
-				if(parent.childNodes[nodeIndex].nodeValue.length > 0) {//if node not empty
-					parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(0,-1);
-				} else {//else previous node
-					index-=1;
-				}
-			} else {//else clear
-				window.clearInterval(interval);
-				if(callback) { callback(); }
-				if(next) { next(); }
-			}
-		}
-	
+	if(this.freezeSize===true) { this.setSize(); }
+	this.element.style.visibility = "visible";
+	if(this.type == 'n') {
+		this._array = this.getTextNodes().slice(0);
+		this._index = this._array.length-1;
+		var t = this;
+		this.interval = window.setInterval(function(){t.unspellCharactersN.call(t);},speed);
+	} else if(this.type == 'r') {
+		this._array = this.getTextNodes().slice(0);
+		this._index = 0;
+		var t = this;
+		this.interval = window.setInterval(function(){t.unspellCharactersR.call(t);},speed);
+	} else if(this.type == 'm') {
+		var middle = Math.ceil(this.text.length/2);
+		this._array = [];
+		this._array1 = this.text.slice(0,middle);//array first half
+		this._array2 = this.text.slice(middle);//array second half
+		this._flag = true;
+		var t = this;
+		this.interval = window.setInterval(function(){t.unspellCharactersM.call(t);},speed);
+	} else if(this.type == 'e') {
+		var middle = Math.ceil(this.text.length/2);
+		this._array = [];
+		this._array1 = this.text.slice(0,middle);//array first half
+		this._array2 = this.text.slice(middle);//array second half
+		this._flag = true;
+		var t = this;
+		this.interval = window.setInterval(function(){t.unspellCharactersE.call(t);},speed);
 	} else {
-		throw new TypeError('Invalid AnimaText() argument : type must be n, r, m or e');
+		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
 }
+
+AnimaText.prototype.unspellCharactersN = function() {
+	if(this._index >=0) {//if a node is left
+		var node = this._array[this._index];
+		var parent = node.parent;
+		var nodeIndex = node.index;
+		var value = node.nodeValue;
+		if(parent.childNodes[nodeIndex].nodeValue.length > 0) {//if node not empty
+			parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(0,-1);
+		} else {//else previous node
+			this._index-=1;
+		}
+	} else {//else clear
+		window.clearInterval(this.interval);
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
+	}
+}
+
+AnimaText.prototype.unspellCharactersR = function() {
+	if(this._index <= this._array.length-1) {//if a node is left
+		var node = this._array[this._index];
+		var parent = node.parent;
+		var nodeIndex = node.index;
+		var value = node.nodeValue;
+		if(parent.childNodes[nodeIndex].nodeValue.length > 0) {//if node not empty
+			parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(1,parent.childNodes[nodeIndex].nodeValue.length);
+		} else {//else previous node
+			this._index+=1;
+		}
+	} else {//else clear
+		window.clearInterval(this.interval);
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
+	}
+}
+
+AnimaText.prototype.unspellCharactersM = function() {
+	if(this._flag == true) {
+		if(this._array1.shift() !== undefined) {
+			this.emptyNodes();//nodes emptied
+			this._array = this._array1.concat(this._array2);//concatenation of the 2 arrays
+			
+			for(var i=0; i<this._array.length; i++) {//nodes filled
+				this._array[i].element.childNodes[this._array[i].nodeIndex].nodeValue += this._array[i].value;
+			}
+			
+			this._flag = false;
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	} else {
+		if(this._array2.pop() !== undefined) {
+			this.emptyNodes();//nodes emptied
+			this._array = this._array1.concat(this._array2);//concatenation of the 2 arrays
+			
+			for(var i=0; i<this._array.length; i++) {//nodes filled
+				this._array[i].element.childNodes[this._array[i].nodeIndex].nodeValue += this._array[i].value;
+			}
+			
+			this._flag = true;	
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	}
+}
+
+AnimaText.prototype.unspellCharactersE = function() {
+	if(this._flag == true) {
+		if(this._array1.pop() !== undefined) {
+			this.emptyNodes();//nodes emptied
+			this._array = this._array1.concat(this._array2);//concatenation of the 2 arrays
+			
+			for(var i=0; i<this._array.length; i++) {//nodes filled
+				this._array[i].element.childNodes[this._array[i].nodeIndex].nodeValue += this._array[i].value;
+			}
+			
+			this._flag = false;
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	} else {
+		if(this._array2.shift() !== undefined) {
+			this.emptyNodes();//nodes emptied
+			this._array = this._array1.concat(this._array2);//concatenation of the 2 arrays
+			
+			for(var i=0; i<this._array.length; i++) {//nodes filled
+				this._array[i].element.childNodes[this._array[i].nodeIndex].nodeValue += this._array[i].value;
+			}
+			
+			this._flag = true;	
+		} else {
+			window.clearInterval(this.interval);
+			if(this.callback) { this.callback(); }
+			if(this.next) { this.next(); }
+		}
+	}
+}
+
+/*
+ ********************UNSPELL WORDS**************************************************************
+ */
+AnimaText.prototype.unspellWords = function() {//init, start
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.count.words;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
+	}
+	if(this.freezeSize===true) { this.setSize(); }
+	this.element.style.visibility = "visible";
+	if(this.type == 'n') {
+		this._array = this.getTextNodes().slice(0);
+		this._index = this._array.length-1;
+		var t = this;
+		this.interval = window.setInterval(function(){t.unspellWordsN.call(t);},speed);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
+	}
+} 
+
+AnimaText.prototype.unspellWordsN = function() {
+	if(this._index >=0) {
+		var node = this._array[this._index];
+		var parent = node.parent;
+		var nodeIndex = node.index;
+		var value = node.nodeValue;
+		var character;
+
+		do {
+			if(node.value.length > 0) {
+				parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(0,-1);
+				character = node.value.splice(-1,1);//in order to evaluate while condition and if condition
+			} else {
+				this._index-=1;
+				break;
+			}
+		} while(character != " " && character.value != "\u00A0")
+				
+	} else {
+		window.clearInterval(this.interval);
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
+	}
+}
+
+
+/*
+ ********************UNSPELL************************************************************************
+ */
+AnimaText.prototype.unspell = function() {
+	this.action = 'unspell';
+	if(typeof this.delay === 'number') {
+		var delay = this.delay;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
+	}
+	
+	if(this.unit=="c") {
+		var t = this;										
+		window.setTimeout(function(){t.unspellCharacters();},t.delay);
+	} else if(this.unit=="w") {
+		var t = this;										
+		window.setTimeout(function(){t.unspellWords();},t.delay);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : unit must be c or w');
+	}
+};  
+ 
+/*
+ ********************PAUSE RESUME STOP**************************************************************
+ */
+AnimaText.prototype.stop = function() {
+	//clear
+	window.clearInterval(this.interval);
+	//re-init
+	if(this.action == 'spell') {
+		if(this.unit == 'c') {
+			if(this.type == ('r'|'n')) {
+				this._index = 0;
+			} else if(this.type == 'm') {
+				this._index1 = Math.ceil(this.text.length/2)-1;//index backwards
+				this._index2 = Math.ceil(this.text.length/2);//index forwards
+				this._flag = true;
+			} else if(this.type == 'e') {
+				this._index1 = 0;//index first half
+				this._index2 = this.text.length -1;//index second half
+				this._middle = Math.ceil(this.text.length/2)-1;
+				this._array1 = [];
+				this._array2 = [];
+				this._flag = true;
+			}
+		} else if(this.unit == 'w') {
+			if(this.type == ('r'|'n')) {
+				this._index = 0;
+			}
+		} else if(this.unit == 's') {
+			if(this.type == ('n')) {
+				this._index = 0;
+			}
+		}
+	} else if(this.action == 'unspell') {
+		if(this.unit == 'c') {
+			if(this.type == ('n')) {
+				this._array = this.getTextNodes().slice(0);
+				this._index = this.array.length-1;
+			} else if (this.type == 'r') {
+				this._array = this.getTextNodes().slice(0);
+				this._index = 0;
+			} else if(this.type == 'm') {
+				var middle = Math.ceil(this.text.length/2);
+				this._array = [];
+				this._array1 = this.text.slice(0,middle);//array first half
+				this._array2 = this.text.slice(middle);//array second half
+				this._flag = true;
+			} else if(this.type == 'e') {
+				var middle = Math.ceil(this.text.length/2);
+				this._array = [];
+				this._array1 = this.text.slice(0,middle);//array first half
+				this._array2 = this.text.slice(middle);//array second half
+				this._flag = true;
+			}
+		}
+	}
+}
+
+AnimaText.prototype.pause = function() {//clear, no re-init
+	window.clearInterval(this.interval);
+}
+
+AnimaText.prototype.resume = function() {//start, no init
+	var t = this;
+	if(this.action == 'spell') {
+		if(this.unit == 'c') {
+			var speed = this.duration/this.count.characters;
+			if(this.type == 'n') {
+				this.interval = window.setInterval(function(){t.spellCharactersN.call(t);},speed)
+			} else if(this.type == 'r') {
+				this.interval = window.setInterval(function(){t.spellCharactersR.call(t);},speed);
+			} else if(this.type === 'm') {
+				this.interval = window.setInterval(function(){t.spellCharactersM.call(t);},speed);
+			} else if(this.type === 'e') {
+				this.interval = window.setInterval(function(){t.spellCharactersE.call(t);},speed);
+			}
+		} else if(this.unit == 'w') {
+			var speed = this.duration/this.count.words;
+			if(this.type == 'n') {
+				this.interval = window.setInterval(function(){t.spellWordsN.call(t);},speed);
+			} else if(this.type == 'r') {
+				this.interval = window.setInterval(function(){t.spellWordsR.call(t);},speed);
+			}
+		} else if(this.unit == 's') {
+			var speed = this.duration/this.count.sentences;
+			if(this.type == 'n') {
+				this.interval = window.setInterval(function(){t.spellSentencesN.call(t);},speed);
+			}
+		}
+	} else if(this.action == 'unspell') {
+		if(this.unit == 'c') {
+			var speed = this.duration/this.count.characters;
+			if(this.type == 'n') {
+				this.interval = window.setInterval(function(){t.unspellCharactersN.call(t);},speed);
+			} else if(this.type == 'r') {
+				this.interval = window.setInterval(function(){t.unspellCharactersR.call(t);},speed);
+			} else if(this.type === 'm') {
+				this.interval = window.setInterval(function(){t.unspellCharactersM.call(t);},speed);
+			} else if(this.type === 'e') {
+				this.interval = window.setInterval(function(){t.unspellCharactersE.call(t);},speed);
+			}
+		} 
+	}
+}
+
+/*
+ ********************************************************************************************
+ */
 
 AnimaText.prototype.unspellWords = function() {
 	if(this.freezeSize===true)
@@ -788,17 +824,6 @@ AnimaText.prototype.unspellWords = function() {
 	}
 }
 
-AnimaText.prototype.unspell = function() {
-	if(this.unit=="c") {
-		return this.unspellCharacters();
-	} else if(this.unit=="w") {
-		return this.unspellWords();
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : unit must be c or w');
-	}
-	
-	
-};
 
 function Speller(container)	{
 	!container
@@ -814,11 +839,11 @@ Speller.prototype.getAnimatexts = function() {
 	var array = [];
 			
 	for(var i=0; i<this.elements.length; i++) {
-		var animatext = {};
-		animatext.options = eval(this.elements[i].getAttribute("data-animatext"));//use of eval : options must be defined in global scope
-		animatext.text = new AnimaText(this.elements[i],animatext.options);
-		if(animatext.options.action != 'unspell' && animatext.text.unit != 'a')//if unit = a, no emptyNodes
-			animatext.text.emptyNodes();
+		//var animatext = {};
+		//animatext.options = eval(this.elements[i].getAttribute("data-animatext"));//use of eval : options must be defined in global scope
+		var animatext = new AnimaText(this.elements[i],eval(this.elements[i].getAttribute("data-animatext")));
+		if(animatext.action != 'unspell' && animatext.unit != 'a')//if unit = a, no emptyNodes
+			animatext.emptyNodes();
 		array.push(animatext);
 	}
 
@@ -830,7 +855,7 @@ Speller.prototype.sortAnimatexts = function(texts) {
 	var max=0;
 	
 	for(i = 0; i<texts.length ; i++) {//in case of non consecutive order numbers : get max order number
-		texts[i].options.order > max ? max = texts[i].options.order : max = max;
+		texts[i].order > max ? max = texts[i].order : max = max;
 	}
 
 	var i=0;
@@ -839,7 +864,7 @@ Speller.prototype.sortAnimatexts = function(texts) {
 		var items = [];
 		
 		for(var j=0 ; j<texts.length; j++) {
-			if(texts[j].options.order == i + 1) {
+			if(texts[j].order == i + 1) {
 				items.push(texts[j]);
 			}
 		}
@@ -855,12 +880,12 @@ Speller.prototype.sortAnimatexts = function(texts) {
 }
 //for each bunch, find the longest in total duration (to which is attached function 'next')
 Speller.prototype.longest = function(array) {
-	var longest = array[0].text;
+	var longest = array[0];
 	
 	if(array.length > 1) {
 		for(var i=1 ; i<array.length ; i++) {
-			if(array[i].text.duration + array[i].text.delay > longest.duration + longest.delay) {
-				longest = array[i].text
+			if(array[i].duration + array[i].delay > longest.duration + longest.delay) {
+				longest = array[i]
 			}
 		}
 	}
@@ -879,10 +904,10 @@ Speller.prototype.launch = function(texts) {
 		}
 			
 		for(var i=0; i<bunch.length; i++) {//launch animation the bunch
-			if(bunch[i].options.action=='spell') {
-				bunch[i].text.spell();
-			} else if (bunch[i].options.action=='unspell') {
-				bunch[i].text.unspell();
+			if(bunch[i].action=='spell') {
+				bunch[i].spell();
+			} else if (bunch[i].action=='unspell') {
+				bunch[i].unspell();
 			} else {
 				throw new TypeError('Invalid speller argument : action must be spell or unspell');
 			}
