@@ -786,11 +786,13 @@ Speller.prototype.getAnimatexts = function() {
 			
 	for(var i=0; i<this.elements.length; i++) {
 		//use of eval : options must be defined in global scope
-		var animatext = new AnimaText(this.elements[i],eval(this.elements[i].getAttribute("data-animatext")));
-		if(animatext.freezeSize===true) { animatext.setSize(); }
-		//if unit = a or action = unspell : no emptyNodes
-		if(animatext.action != 'unspell' && animatext.unit != 'a') { animatext.emptyNodes(); }
-		array.push(animatext);
+		if(eval(this.elements[i].getAttribute("data-animatext")) !== null) {
+			var animatext = new AnimaText(this.elements[i],eval(this.elements[i].getAttribute("data-animatext")));
+			if(animatext.freezeSize===true) { animatext.setSize(); }
+			//if unit = a or action = unspell : no emptyNodes
+			if(animatext.action != 'unspell' && animatext.unit != 'a') { animatext.emptyNodes(); }
+			array.push(animatext);
+		}
 	}
 
 	return array;
@@ -844,6 +846,7 @@ Speller.prototype.launch = function(texts) {
 	
 	if(texts[0]) {//always deal with the first bunch of texts if there's one left
 		var bunch = texts[0];
+		
 		if(texts.length > 1) {//if bunch is the last, no next
 			var longest = this.longest(bunch);
 			longest.next = function() {//attach function 'next' to longest in total duration 
@@ -864,6 +867,11 @@ Speller.prototype.launch = function(texts) {
 		
 		texts.splice(0,1);//remove bunch dealt with	
 	}
+}
+
+Speller.prototype.setOptions = function() {
+	this.animatexts = this.getAnimatexts();
+	this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
 }
 
 Speller.prototype.start = function() {
