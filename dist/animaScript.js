@@ -64,6 +64,7 @@ function AnimaText(element,options) {
     //function callback for speller
     this.next = null;
     this._inprog = null;
+    this._waiting = null;
 }
 
 AnimaText.prototype.setUnit = function(value) {
@@ -531,6 +532,7 @@ AnimaText.prototype.spellCharacters = function() {// init, start
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
+	this._waiting = null;
 	this._inprog = true;
 }
 
@@ -553,6 +555,7 @@ AnimaText.prototype.spellWords = function() {//init, start
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
 	}
+	this._waiting = null;
 	this._inprog = true;
 }
 
@@ -572,6 +575,7 @@ AnimaText.prototype.spellSentences = function() {//init, start
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = s, type must be n');
 	}
+	this._waiting = null;
 	this._inprog = true;
 }    
 
@@ -610,6 +614,7 @@ AnimaText.prototype.unspellCharacters = function() {//init, start
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
+	this._waiting = null;
 	this._inprog = true;
 }
 
@@ -633,6 +638,7 @@ AnimaText.prototype.unspellWords = function() {//init, start
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
 	}
+	this._waiting = null;
 	this._inprog = true;
 }
 
@@ -647,16 +653,17 @@ AnimaText.prototype.spell = function() {
 	if(this.interval !== undefined) { clearInterval(this.interval); }
 	var t = this;	
 	if(this.unit=="c") {
-		window.setTimeout(function(){t.spellCharacters();},t.delay);
+		this.timeout = window.setTimeout(function(){t.spellCharacters();},t.delay);
 	} else if(this.unit=="w") {
-		window.setTimeout(function(){t.spellWords();},t.delay);
+		this.timeout = window.setTimeout(function(){t.spellWords();},t.delay);
 	} else if(this.unit=="s") {
-		window.setTimeout(function(){t.spellSentences();},t.delay);
+		this.timeout = window.setTimeout(function(){t.spellSentences();},t.delay);
 	} else if(this.unit=="a") {
 		return this.spellAll();
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : unit must be c, w, s or a');
 	}
+	this._waiting = true;
 }; 
 
 AnimaText.prototype.unspell = function() {
@@ -671,21 +678,31 @@ AnimaText.prototype.unspell = function() {
 	
 	var t = this;	
 	if(this.unit=="c") {
-		window.setTimeout(function(){t.unspellCharacters();},t.delay);
+		this.timeout = window.setTimeout(function(){t.unspellCharacters();},t.delay);
 	} else if(this.unit=="w") {
-		window.setTimeout(function(){t.unspellWords();},t.delay);
+		this.timeout = window.setTimeout(function(){t.unspellWords();},t.delay);
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : unit must be c or w');
 	}
+	this._waiting = true;
 };
   
 AnimaText.prototype.stop = function() {//clear
-	if(this._inprog !== true) { return; }
-	window.clearInterval(this.interval);
-	this._inprog = null;
+	if(this._waiting === true) {
+		window.clearTimeout(this.timeout);
+		this._waiting = null;
+	}
+	if(this._inprog === true) {
+		window.clearInterval(this.interval);
+		this._inprog = null;
+	}
 }
 
 AnimaText.prototype.pause = function() {//clear
+	if(this._waiting === true) {
+		window.clearTimeout(this.timeout);
+		this._waiting = false;
+	}
 	if(this._inprog === true) { 
 		window.clearInterval(this.interval);
 		this._inprog = false;
@@ -693,6 +710,14 @@ AnimaText.prototype.pause = function() {//clear
 }
 
 AnimaText.prototype.resume = function() {//start, no init
+	if(this._waiting === false) {
+		if(this.action === 'spell') {
+			this.spell();
+		} else if(this.action === 'unspell') {
+			this.unspell();
+		}
+		return;
+	}
 	if(this._inprog !== false) { return; }
 	
 	var t = this;
@@ -817,14 +842,16 @@ Speller.prototype.longest = function(array) {
 Speller.prototype.launch = function(texts) {
 	var instance = this;
 	
-	if(texts[0]) {//always deal with the first bunch of texts
+	if(texts[0]) {//always deal with the first bunch of texts if there's one left
 		var bunch = texts[0];
-		var longest = this.longest(bunch);
-		longest.next = function() {//attach function 'next' to longest in total duration 
-			instance.launch(texts);//will call the next bunch
+		if(texts.length > 1) {//if bunch is the last, no next
+			var longest = this.longest(bunch);
+			longest.next = function() {//attach function 'next' to longest in total duration 
+				instance.launch(texts);//will call the next bunch
+			}
 		}
 			
-		for(var i=0; i<bunch.length; i++) {//launch animation the bunch
+		for(var i=0; i<bunch.length; i++) {//launch animation for all animatexts of the bunch
 			if(bunch[i].action=='spell') {
 				bunch[i].spell();
 			} else if (bunch[i].action=='unspell') {
@@ -832,6 +859,7 @@ Speller.prototype.launch = function(texts) {
 			} else {
 				throw new TypeError('Invalid speller argument : action must be spell or unspell');
 			}
+			this.current = bunch;
 		}
 		
 		texts.splice(0,1);//remove bunch dealt with	
@@ -839,6 +867,24 @@ Speller.prototype.launch = function(texts) {
 }
 
 Speller.prototype.start = function() {
-	this.queue = this.sortedAnimatexts.slice(0);
-	this.launch(this.queue);
+	var queue = this.sortedAnimatexts.slice(0);
+	this.launch(queue);
+}
+
+Speller.prototype.stop = function() {
+	for(var i=0; i<this.current.length; i++) {
+		this.current[i].stop();
+	}
+}
+
+Speller.prototype.pause = function() {
+	for(var i=0; i<this.current.length; i++) {
+		this.current[i].pause();
+	}
+}
+
+Speller.prototype.resume = function() {
+	for(var i=0; i<this.current.length; i++) {
+		this.current[i].resume();
+	}
 }
