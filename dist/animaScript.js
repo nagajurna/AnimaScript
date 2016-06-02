@@ -506,6 +506,7 @@ AnimaText.prototype.spellCharacters = function() {// init, start
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
 	}
+	
 	if(this.freezeSize===true) { this.setSize(); }
 	this.emptyNodes();
 	this.element.style.visibility = "visible";
@@ -812,7 +813,7 @@ Speller.prototype.sortAnimatexts = function(texts) {
 		var items = [];
 		
 		for(var j=0 ; j<texts.length; j++) {
-			if(texts[j].order == i + 1) {
+			if(texts[j].order == i + 1) {//i+1 : meaning that order:0 won't be taken in account
 				items.push(texts[j]);
 			}
 		}
@@ -870,7 +871,16 @@ Speller.prototype.launch = function(texts) {
 }
 
 Speller.prototype.setOptions = function() {
-	this.animatexts = this.getAnimatexts();
+	for(var i=0; i<this.animatexts.length; i++) {
+		this._options = eval(this.animatexts[i].element.getAttribute("data-animatext"));
+		if(this._options !== null) {
+			for(var option in this._options) {
+					this.animatexts[i][option] = this._options[option];
+			}
+		} else {
+			this.animatexts[i].order = 0;//if options=null, animatext won't play
+		}
+	}
 	this.sortedAnimatexts = this.sortAnimatexts(this.animatexts);
 }
 
