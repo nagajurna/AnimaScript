@@ -63,7 +63,7 @@ function AnimaText(element,options) {
     this.count = this.getCounts();
     //function callback for speller
     this.next = null;
-    //this.action = null;
+    this._inprog = null;
 }
 
 AnimaText.prototype.setUnit = function(value) {
@@ -166,51 +166,12 @@ AnimaText.prototype.setSize = function() {
 };
     
 AnimaText.prototype.emptyNodes = function() {//emptying nodes
-	if(this.freezeSize===true)
-		this.setSize();
 	var nodes = this.getTextNodes();
 	for(var i=0; i < nodes.length; i++) {//each node emptied (nodeValue = "")
 		nodes[i].parent.childNodes[nodes[i].index].nodeValue = "";
 	}
 };
-/*
- ********************SPELL CHARACTERS************************************************************************
- */		
-AnimaText.prototype.spellCharacters = function() {// init, start
-	if(typeof this.duration === 'number') {
-		var speed = this.duration/this.count.characters;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
-	}
-	this.emptyNodes();
-	this.element.style.visibility = "visible";
-	if(this.type == 'n') {
-		this._index = 0;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellCharactersN.call(t);},speed);
-	} else if(this.type == 'r') {
-		this._index = 0;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellCharactersR.call(t);},speed);
-	} else if(this.type == 'm') {
-		this._index1 = Math.ceil(this.text.length/2)-1;//index first half (backwards)
-		this._index2 = Math.ceil(this.text.length/2);//index second half (forward)
-		this._flag = true;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellCharactersM.call(t);},speed);
-	} else if(this.type == 'e') {
-		this._index1 = 0;//index first half
-		this._index2 = this.text.length -1;//index second half
-		this._middle = Math.ceil(this.text.length/2)-1;
-		this._array1 = [];
-		this._array2 = [];
-		this._flag = true;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellCharactersE.call(t);},speed);
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
-	}
-}
+		
 //spellNormal (type: n) : spells from first character to the last
 AnimaText.prototype.spellCharactersN = function() {
 	var c;//character
@@ -220,6 +181,7 @@ AnimaText.prototype.spellCharactersN = function() {
 		this._index += 1;
 	} else {
 		window.clearInterval(this.interval);
+		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
 	}
@@ -233,6 +195,7 @@ AnimaText.prototype.spellCharactersR = function() {
 		this._index += 1;						
 	} else {
 		window.clearInterval(this.interval);
+		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
 	}
@@ -248,6 +211,7 @@ AnimaText.prototype.spellCharactersM = function() {
 			this._flag = false;
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
@@ -260,6 +224,7 @@ AnimaText.prototype.spellCharactersM = function() {
 			this._flag = true;	
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
@@ -284,6 +249,7 @@ AnimaText.prototype.spellCharactersE = function() {
 			this._flag = false;
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
@@ -303,34 +269,12 @@ AnimaText.prototype.spellCharactersE = function() {
 			this._flag = true;	
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
 	}
 }
-/*
- ********************SPELL WORDS************************************************************************
- */	
-AnimaText.prototype.spellWords = function() {//init, start
-	if(typeof this.duration === 'number') {
-		var speed = this.duration/this.count.words;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
-	}
-	this.emptyNodes();
-	this.element.style.visibility = "visible";
-	if(this.type == 'n') {
-		this.index = 0;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellWordsN.call(t);},speed);
-	} else if(this.type == 'r') {
-		this.index = 0;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellWordsR.call(t);},speed);
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
-	}
-} 
 
 AnimaText.prototype.spellWordsN = function() {
 	var c;//character
@@ -341,6 +285,7 @@ AnimaText.prototype.spellWordsN = function() {
 			this.index += 1;
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 			break;
@@ -357,33 +302,13 @@ AnimaText.prototype.spellWordsR = function() {
 			this.index += 1;						
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 			break;
 		}
 	} while(c.value != " " && c.value != "\u00A0")//spell until space
 }
-
-/*
- ********************SPELL SENTENCES************************************************************************
- */
- 
-AnimaText.prototype.spellSentences = function() {//init, start
-	if(typeof this.duration === 'number') {
-		var speed = this.duration/this.count.sentences;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
-	}
-	this.emptyNodes();
-	this.element.style.visibility = "visible";
-	if(this.type == 'n') {
-		this.index = 0;
-		var t = this;
-		this.interval = window.setInterval(function(){t.spellSentencesN.call(t);},speed);
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : if unit = s, type must be n');
-	}
-} 
 
 AnimaText.prototype.spellSentencesN = function() {
 	var c;//character
@@ -394,6 +319,7 @@ AnimaText.prototype.spellSentencesN = function() {
 			this.index += 1;
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 			break;
@@ -401,10 +327,6 @@ AnimaText.prototype.spellSentencesN = function() {
 	} while(c.value != "." && c.value != "\u2026" && c.value != "\u003F" && c.value != "\u0021")//spell until full stop, hellip, ? et !
 }
 
- 
- /*
- ********************SPELL ALL********************************************************************
- */	
 AnimaText.prototype.spellAll = function() {//init, start
 	//no empty nodes
 	this.element.style.visibility = 'hidden';
@@ -412,79 +334,10 @@ AnimaText.prototype.spellAll = function() {//init, start
 	window.setTimeout(function(){
 		t.element.style.visibility = 'visible';
 		if(t.callback) { t.callback(); }
+		t._inprog = null;
 		if(t.next) { t.next(); }
 		},t.delay);
 } 
- 
-/*
- ********************SPELL************************************************************************
- */
-AnimaText.prototype.spell = function() {
-	this.action = 'spell';
-	if(typeof this.delay === 'number') {
-		var delay = this.delay;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
-	}
-	
-	if(this.unit=="c") {
-		var t = this;										
-		window.setTimeout(function(){t.spellCharacters();},t.delay);
-	} else if(this.unit=="w") {
-		var t = this;										
-		window.setTimeout(function(){t.spellWords();},t.delay);
-	} else if(this.unit=="s") {
-		var t = this;										
-		window.setTimeout(function(){t.spellSentences();},t.delay);
-	} else if(this.unit=="a") {
-		return this.spellAll();
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : unit must be c, w, s or a');
-	}
-}; 
-
-/*
- ********************UNSPELL CHARACTERS**************************************************************
- */
-
-AnimaText.prototype.unspellCharacters = function() {//init, start
-	if(typeof this.duration === 'number') {
-		var speed = this.duration/this.count.characters;
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
-	}
-	if(this.freezeSize===true) { this.setSize(); }
-	this.element.style.visibility = "visible";
-	if(this.type == 'n') {
-		this._array = this.getTextNodes().slice(0);
-		this._index = this._array.length-1;
-		var t = this;
-		this.interval = window.setInterval(function(){t.unspellCharactersN.call(t);},speed);
-	} else if(this.type == 'r') {
-		this._array = this.getTextNodes().slice(0);
-		this._index = 0;
-		var t = this;
-		this.interval = window.setInterval(function(){t.unspellCharactersR.call(t);},speed);
-	} else if(this.type == 'm') {
-		var middle = Math.ceil(this.text.length/2);
-		this._array = [];
-		this._array1 = this.text.slice(0,middle);//array first half
-		this._array2 = this.text.slice(middle);//array second half
-		this._flag = true;
-		var t = this;
-		this.interval = window.setInterval(function(){t.unspellCharactersM.call(t);},speed);
-	} else if(this.type == 'e') {
-		var middle = Math.ceil(this.text.length/2);
-		this._array = [];
-		this._array1 = this.text.slice(0,middle);//array first half
-		this._array2 = this.text.slice(middle);//array second half
-		this._flag = true;
-		var t = this;
-		this.interval = window.setInterval(function(){t.unspellCharactersE.call(t);},speed);
-	} else {
-		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
-	}
-}
 
 AnimaText.prototype.unspellCharactersN = function() {
 	if(this._index >=0) {//if a node is left
@@ -499,6 +352,7 @@ AnimaText.prototype.unspellCharactersN = function() {
 		}
 	} else {//else clear
 		window.clearInterval(this.interval);
+		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
 	}
@@ -517,6 +371,7 @@ AnimaText.prototype.unspellCharactersR = function() {
 		}
 	} else {//else clear
 		window.clearInterval(this.interval);
+		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
 	}
@@ -535,6 +390,7 @@ AnimaText.prototype.unspellCharactersM = function() {
 			this._flag = false;
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
@@ -550,6 +406,7 @@ AnimaText.prototype.unspellCharactersM = function() {
 			this._flag = true;	
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
@@ -569,6 +426,7 @@ AnimaText.prototype.unspellCharactersE = function() {
 			this._flag = false;
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
@@ -584,15 +442,177 @@ AnimaText.prototype.unspellCharactersE = function() {
 			this._flag = true;	
 		} else {
 			window.clearInterval(this.interval);
+			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
 		}
 	}
 }
 
-/*
- ********************UNSPELL WORDS**************************************************************
- */
+AnimaText.prototype.unspellWordsN = function() {
+	if(this._index >= 0) {
+		var node = this._array[this._index];
+		var parent = node.parent;
+		var nodeIndex = node.index;
+		var character;
+
+		do {
+			if(node.value.length > 0) {
+				parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(0,-1);
+				character = node.value.pop();//in order to evaluate while condition and if condition
+			} else {
+				this._index-=1;
+				break;
+			}
+		} while(character != " " && character != "\u00A0")
+				
+	} else {
+		window.clearInterval(this.interval);
+		this._inprog = null;
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
+	}
+}
+
+AnimaText.prototype.unspellWordsR = function() {
+	if(this._index < this._array.length) {
+		var node = this._array[this._index];
+		var parent = node.parent;
+		var nodeIndex = node.index;
+		var character;
+
+		do {
+			if(node.value.length > 0) {
+				parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(1);
+				character = node.value.shift();//in order to evaluate while condition and if condition
+			} else {
+				this._index+=1;
+				break;
+			}
+		} while(character != " " && character != "\u00A0")
+				
+	} else {
+		window.clearInterval(this.interval);
+		this._inprog = null;
+		if(this.callback) { this.callback(); }
+		if(this.next) { this.next(); }
+	}
+}
+
+AnimaText.prototype.spellCharacters = function() {// init, start
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.count.characters;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
+	}
+	if(this.freezeSize===true) { this.setSize(); }
+	this.emptyNodes();
+	this.element.style.visibility = "visible";
+	var t = this;
+	if(this.type == 'n') {
+		this._index = 0;
+		this.interval = window.setInterval(function(){t.spellCharactersN.call(t);},speed);
+	} else if(this.type == 'r') {
+		this._index = 0;
+		this.interval = window.setInterval(function(){t.spellCharactersR.call(t);},speed);
+	} else if(this.type == 'm') {
+		this._index1 = Math.ceil(this.text.length/2)-1;//index first half (backwards)
+		this._index2 = Math.ceil(this.text.length/2);//index second half (forward)
+		this._flag = true;
+		this.interval = window.setInterval(function(){t.spellCharactersM.call(t);},speed);
+	} else if(this.type == 'e') {
+		this._index1 = 0;//index first half
+		this._index2 = this.text.length -1;//index second half
+		this._middle = Math.ceil(this.text.length/2)-1;
+		this._array1 = [];
+		this._array2 = [];
+		this._flag = true;
+		this.interval = window.setInterval(function(){t.spellCharactersE.call(t);},speed);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
+	}
+	this._inprog = true;
+}
+
+AnimaText.prototype.spellWords = function() {//init, start
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.count.words;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
+	}
+	if(this.freezeSize===true) { this.setSize(); }
+	this.emptyNodes();
+	this.element.style.visibility = "visible";
+	var t = this;
+	if(this.type == 'n') {
+		this.index = 0;
+		this.interval = window.setInterval(function(){t.spellWordsN.call(t);},speed);
+	} else if(this.type == 'r') {
+		this.index = 0;
+		this.interval = window.setInterval(function(){t.spellWordsR.call(t);},speed);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
+	}
+	this._inprog = true;
+}
+
+AnimaText.prototype.spellSentences = function() {//init, start
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.count.sentences;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
+	}
+	if(this.freezeSize===true) { this.setSize(); }
+	this.emptyNodes();
+	this.element.style.visibility = "visible";
+	var t = this;
+	if(this.type == 'n') {
+		this.index = 0;
+		this.interval = window.setInterval(function(){t.spellSentencesN.call(t);},speed);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : if unit = s, type must be n');
+	}
+	this._inprog = true;
+}    
+
+AnimaText.prototype.unspellCharacters = function() {//init, start
+	if(typeof this.duration === 'number') {
+		var speed = this.duration/this.count.characters;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : duration must be a number');
+	}
+	
+	if(this.freezeSize===true) { this.setSize(); }
+	this.element.style.visibility = "visible";
+	var t = this;
+	if(this.type == 'n') {
+		this._array = this.getTextNodes().slice(0);
+		this._index = this._array.length-1;
+		this.interval = window.setInterval(function(){t.unspellCharactersN.call(t);},speed);
+	} else if(this.type == 'r') {
+		this._array = this.getTextNodes().slice(0);
+		this._index = 0;
+		this.interval = window.setInterval(function(){t.unspellCharactersR.call(t);},speed);
+	} else if(this.type == 'm') {
+		var middle = Math.ceil(this.text.length/2);
+		this._array = [];
+		this._array1 = this.text.slice(0,middle);//array first half
+		this._array2 = this.text.slice(middle);//array second half
+		this._flag = true;
+		this.interval = window.setInterval(function(){t.unspellCharactersM.call(t);},speed);
+	} else if(this.type == 'e') {
+		var middle = Math.ceil(this.text.length/2);
+		this._array = [];
+		this._array1 = this.text.slice(0,middle);//array first half
+		this._array2 = this.text.slice(middle);//array second half
+		this._flag = true;
+		this.interval = window.setInterval(function(){t.unspellCharactersE.call(t);},speed);
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
+	}
+	this._inprog = true;
+}
+
 AnimaText.prototype.unspellWords = function() {//init, start
 	if(typeof this.duration === 'number') {
 		var speed = this.duration/this.count.words;
@@ -601,45 +621,44 @@ AnimaText.prototype.unspellWords = function() {//init, start
 	}
 	if(this.freezeSize===true) { this.setSize(); }
 	this.element.style.visibility = "visible";
+	var t = this;
 	if(this.type == 'n') {
 		this._array = this.getTextNodes().slice(0);
 		this._index = this._array.length-1;
-		var t = this;
 		this.interval = window.setInterval(function(){t.unspellWordsN.call(t);},speed);
+	} else if(this.type === 'r') {
+		this._array = this.getTextNodes().slice(0);
+		this._index = 0;
+		this.interval = window.setInterval(function(){t.unspellWordsR.call(t);},speed);
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
 	}
-} 
-
-AnimaText.prototype.unspellWordsN = function() {
-	if(this._index >=0) {
-		var node = this._array[this._index];
-		var parent = node.parent;
-		var nodeIndex = node.index;
-		var value = node.nodeValue;
-		var character;
-
-		do {
-			if(node.value.length > 0) {
-				parent.childNodes[nodeIndex].nodeValue = parent.childNodes[nodeIndex].nodeValue.slice(0,-1);
-				character = node.value.splice(-1,1);//in order to evaluate while condition and if condition
-			} else {
-				this._index-=1;
-				break;
-			}
-		} while(character != " " && character.value != "\u00A0")
-				
-	} else {
-		window.clearInterval(this.interval);
-		if(this.callback) { this.callback(); }
-		if(this.next) { this.next(); }
-	}
+	this._inprog = true;
 }
 
+AnimaText.prototype.spell = function() {
+	this.action = 'spell';
+	if(typeof this.delay === 'number') {
+		var delay = this.delay;
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
+	}
+	
+	if(this.interval !== undefined) { clearInterval(this.interval); }
+	var t = this;	
+	if(this.unit=="c") {
+		window.setTimeout(function(){t.spellCharacters();},t.delay);
+	} else if(this.unit=="w") {
+		window.setTimeout(function(){t.spellWords();},t.delay);
+	} else if(this.unit=="s") {
+		window.setTimeout(function(){t.spellSentences();},t.delay);
+	} else if(this.unit=="a") {
+		return this.spellAll();
+	} else {
+		throw new TypeError('Invalid AnimaText() argument : unit must be c, w, s or a');
+	}
+}; 
 
-/*
- ********************UNSPELL************************************************************************
- */
 AnimaText.prototype.unspell = function() {
 	this.action = 'unspell';
 	if(typeof this.delay === 'number') {
@@ -648,79 +667,34 @@ AnimaText.prototype.unspell = function() {
 		throw new TypeError('Invalid AnimaText() argument : delay must be a number');
 	}
 	
+	if(this.interval !== undefined) { clearInterval(this.interval); }
+	
+	var t = this;	
 	if(this.unit=="c") {
-		var t = this;										
 		window.setTimeout(function(){t.unspellCharacters();},t.delay);
 	} else if(this.unit=="w") {
-		var t = this;										
 		window.setTimeout(function(){t.unspellWords();},t.delay);
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : unit must be c or w');
 	}
-};  
- 
-/*
- ********************PAUSE RESUME STOP**************************************************************
- */
-AnimaText.prototype.stop = function() {
-	//clear
+};
+  
+AnimaText.prototype.stop = function() {//clear
+	if(this._inprog !== true) { return; }
 	window.clearInterval(this.interval);
-	//re-init
-	if(this.action == 'spell') {
-		if(this.unit == 'c') {
-			if(this.type == ('r'|'n')) {
-				this._index = 0;
-			} else if(this.type == 'm') {
-				this._index1 = Math.ceil(this.text.length/2)-1;//index backwards
-				this._index2 = Math.ceil(this.text.length/2);//index forwards
-				this._flag = true;
-			} else if(this.type == 'e') {
-				this._index1 = 0;//index first half
-				this._index2 = this.text.length -1;//index second half
-				this._middle = Math.ceil(this.text.length/2)-1;
-				this._array1 = [];
-				this._array2 = [];
-				this._flag = true;
-			}
-		} else if(this.unit == 'w') {
-			if(this.type == ('r'|'n')) {
-				this._index = 0;
-			}
-		} else if(this.unit == 's') {
-			if(this.type == ('n')) {
-				this._index = 0;
-			}
-		}
-	} else if(this.action == 'unspell') {
-		if(this.unit == 'c') {
-			if(this.type == ('n')) {
-				this._array = this.getTextNodes().slice(0);
-				this._index = this.array.length-1;
-			} else if (this.type == 'r') {
-				this._array = this.getTextNodes().slice(0);
-				this._index = 0;
-			} else if(this.type == 'm') {
-				var middle = Math.ceil(this.text.length/2);
-				this._array = [];
-				this._array1 = this.text.slice(0,middle);//array first half
-				this._array2 = this.text.slice(middle);//array second half
-				this._flag = true;
-			} else if(this.type == 'e') {
-				var middle = Math.ceil(this.text.length/2);
-				this._array = [];
-				this._array1 = this.text.slice(0,middle);//array first half
-				this._array2 = this.text.slice(middle);//array second half
-				this._flag = true;
-			}
-		}
+	this._inprog = null;
+}
+
+AnimaText.prototype.pause = function() {//clear
+	if(this._inprog === true) { 
+		window.clearInterval(this.interval);
+		this._inprog = false;
 	}
 }
 
-AnimaText.prototype.pause = function() {//clear, no re-init
-	window.clearInterval(this.interval);
-}
-
 AnimaText.prototype.resume = function() {//start, no init
+	if(this._inprog !== false) { return; }
+	
 	var t = this;
 	if(this.action == 'spell') {
 		if(this.unit == 'c') {
@@ -759,13 +733,18 @@ AnimaText.prototype.resume = function() {//start, no init
 			} else if(this.type === 'e') {
 				this.interval = window.setInterval(function(){t.unspellCharactersE.call(t);},speed);
 			}
-		} 
+		} else if(this.unit == 'w') {
+			var speed = this.duration/this.count.words;
+			if(this.type == 'n') {
+				this.interval = window.setInterval(function(){t.unspellWordsN.call(t);},speed);
+			} else if(this.type == 'r') {
+				this.interval = window.setInterval(function(){t.unspellWordsR.call(t);},speed);
+			}
+		}
 	}
+	
+	this._inprog = true;
 }
-
-/*
- ********************************************************************************************
- */
 
 function Speller(container)	{
 	!container
@@ -781,11 +760,11 @@ Speller.prototype.getAnimatexts = function() {
 	var array = [];
 			
 	for(var i=0; i<this.elements.length; i++) {
-		//var animatext = {};
-		//animatext.options = eval(this.elements[i].getAttribute("data-animatext"));//use of eval : options must be defined in global scope
+		//use of eval : options must be defined in global scope
 		var animatext = new AnimaText(this.elements[i],eval(this.elements[i].getAttribute("data-animatext")));
-		if(animatext.action != 'unspell' && animatext.unit != 'a')//if unit = a, no emptyNodes
-			animatext.emptyNodes();
+		if(animatext.freezeSize===true) { animatext.setSize(); }
+		//if unit = a or action = unspell : no emptyNodes
+		if(animatext.action != 'unspell' && animatext.unit != 'a') { animatext.emptyNodes(); }
 		array.push(animatext);
 	}
 
