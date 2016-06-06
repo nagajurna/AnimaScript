@@ -63,8 +63,15 @@ function AnimaText(element,options) {
     this.count = this.getCounts();
     //function callback for speller
     this.next = null;
+    //properties for stop, pause, resume
     this._inprog = null;
     this._waiting = null;
+    //events animatext
+    this.animatext_startEvent = new CustomEvent('animatext_start',{detail:{container: this.element}});
+    this.animatext_completeEvent = new CustomEvent('animatext_end',{detail:{container: this.element}});
+    //events speller
+    this.speller_startEvent = new CustomEvent('speller_start',{detail:{container: this.element}});
+    this.speller_completeEvent = new CustomEvent('speller_end',{detail:{container: this.element}});
 }
 
 AnimaText.prototype.setUnit = function(value) {
@@ -185,6 +192,8 @@ AnimaText.prototype.spellCharactersN = function() {
 		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
+		document.dispatchEvent(this.animatext_completeEvent);
+		if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 	}
 }
 //spellReverse (type: r) : spells from last character to the first
@@ -199,6 +208,8 @@ AnimaText.prototype.spellCharactersR = function() {
 		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
+		document.dispatchEvent(this.animatext_completeEvent);
+		if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 	}
 }
 //spellMiddle (type: m) : spells from the middle to the extremities
@@ -215,6 +226,8 @@ AnimaText.prototype.spellCharactersM = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	} else {//second half (forwards)
 		var c2;//character
@@ -228,6 +241,8 @@ AnimaText.prototype.spellCharactersM = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	}
 }
@@ -253,6 +268,8 @@ AnimaText.prototype.spellCharactersE = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	} else {//second half
 		var c2;//character
@@ -273,6 +290,8 @@ AnimaText.prototype.spellCharactersE = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	}
 }
@@ -289,6 +308,8 @@ AnimaText.prototype.spellWordsN = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 			break;
 		}
 	} while(c.value != " " && c.value != "\u00A0")//spell until space
@@ -306,6 +327,8 @@ AnimaText.prototype.spellWordsR = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 			break;
 		}
 	} while(c.value != " " && c.value != "\u00A0")//spell until space
@@ -323,6 +346,8 @@ AnimaText.prototype.spellSentencesN = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 			break;
 		}
 	} while(c.value != "." && c.value != "\u2026" && c.value != "\u003F" && c.value != "\u0021")//spell until full stop, hellip, ? et !
@@ -356,6 +381,8 @@ AnimaText.prototype.unspellCharactersN = function() {
 		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
+		document.dispatchEvent(this.animatext_completeEvent);
+		if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 	}
 }
 
@@ -375,6 +402,8 @@ AnimaText.prototype.unspellCharactersR = function() {
 		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
+		document.dispatchEvent(this.animatext_completeEvent);
+		if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 	}
 }
 
@@ -394,6 +423,8 @@ AnimaText.prototype.unspellCharactersM = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	} else {
 		if(this._array2.pop() !== undefined) {
@@ -410,6 +441,8 @@ AnimaText.prototype.unspellCharactersM = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	}
 }
@@ -430,6 +463,8 @@ AnimaText.prototype.unspellCharactersE = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	} else {
 		if(this._array2.shift() !== undefined) {
@@ -446,6 +481,8 @@ AnimaText.prototype.unspellCharactersE = function() {
 			this._inprog = null;
 			if(this.callback) { this.callback(); }
 			if(this.next) { this.next(); }
+			document.dispatchEvent(this.animatext_completeEvent);
+			if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 		}
 	}
 }
@@ -472,6 +509,8 @@ AnimaText.prototype.unspellWordsN = function() {
 		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
+		document.dispatchEvent(this.animatext_completeEvent);
+		if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 	}
 }
 
@@ -497,6 +536,8 @@ AnimaText.prototype.unspellWordsR = function() {
 		this._inprog = null;
 		if(this.callback) { this.callback(); }
 		if(this.next) { this.next(); }
+		document.dispatchEvent(this.animatext_completeEvent);
+		if(this.last===true) {document.dispatchEvent(this.speller_completeEvent);}
 	}
 }
 
@@ -514,14 +555,20 @@ AnimaText.prototype.spellCharacters = function() {// init, start
 	if(this.type == 'n') {
 		this._index = 0;
 		this.interval = window.setInterval(function(){t.spellCharactersN.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'r') {
 		this._index = 0;
 		this.interval = window.setInterval(function(){t.spellCharactersR.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'm') {
 		this._index1 = Math.ceil(this.text.length/2)-1;//index first half (backwards)
 		this._index2 = Math.ceil(this.text.length/2);//index second half (forward)
 		this._flag = true;
 		this.interval = window.setInterval(function(){t.spellCharactersM.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'e') {
 		this._index1 = 0;//index first half
 		this._index2 = this.text.length -1;//index second half
@@ -530,6 +577,8 @@ AnimaText.prototype.spellCharacters = function() {// init, start
 		this._array2 = [];
 		this._flag = true;
 		this.interval = window.setInterval(function(){t.spellCharactersE.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
@@ -550,9 +599,13 @@ AnimaText.prototype.spellWords = function() {//init, start
 	if(this.type == 'n') {
 		this.index = 0;
 		this.interval = window.setInterval(function(){t.spellWordsN.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'r') {
 		this.index = 0;
 		this.interval = window.setInterval(function(){t.spellWordsR.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
 	}
@@ -573,6 +626,8 @@ AnimaText.prototype.spellSentences = function() {//init, start
 	if(this.type == 'n') {
 		this.index = 0;
 		this.interval = window.setInterval(function(){t.spellSentencesN.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = s, type must be n');
 	}
@@ -594,10 +649,14 @@ AnimaText.prototype.unspellCharacters = function() {//init, start
 		this._array = this.getTextNodes().slice(0);
 		this._index = this._array.length-1;
 		this.interval = window.setInterval(function(){t.unspellCharactersN.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'r') {
 		this._array = this.getTextNodes().slice(0);
 		this._index = 0;
 		this.interval = window.setInterval(function(){t.unspellCharactersR.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'm') {
 		var middle = Math.ceil(this.text.length/2);
 		this._array = [];
@@ -605,6 +664,8 @@ AnimaText.prototype.unspellCharacters = function() {//init, start
 		this._array2 = this.text.slice(middle);//array second half
 		this._flag = true;
 		this.interval = window.setInterval(function(){t.unspellCharactersM.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type == 'e') {
 		var middle = Math.ceil(this.text.length/2);
 		this._array = [];
@@ -612,6 +673,8 @@ AnimaText.prototype.unspellCharacters = function() {//init, start
 		this._array2 = this.text.slice(middle);//array second half
 		this._flag = true;
 		this.interval = window.setInterval(function(){t.unspellCharactersE.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = c, type must be n, r, m or e');
 	}
@@ -632,10 +695,14 @@ AnimaText.prototype.unspellWords = function() {//init, start
 		this._array = this.getTextNodes().slice(0);
 		this._index = this._array.length-1;
 		this.interval = window.setInterval(function(){t.unspellWordsN.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else if(this.type === 'r') {
 		this._array = this.getTextNodes().slice(0);
 		this._index = 0;
 		this.interval = window.setInterval(function(){t.unspellWordsR.call(t);},speed);
+		document.dispatchEvent(this.animatext_startEvent);
+		if(this.first===true) {document.dispatchEvent(this.speller_startEvent);}
 	} else {
 		throw new TypeError('Invalid AnimaText() argument : if unit = w, type must be n or r');
 	}
@@ -847,12 +914,27 @@ Speller.prototype.launch = function(texts) {
 	
 	if(texts[0]) {//always deal with the first bunch of texts if there's one left
 		var bunch = texts[0];
+		//for speller_completeEvent : re-init, for all animatexts, last = false
+		//for speller_startEvent : re-init, for all animatexts, first = false
+		for(var i=0; i<bunch.length; i++) {
+			bunch[i].last = false;
+			bunch[i].first = false;
+		}
 		
 		if(texts.length > 1) {//if bunch is the last, no next
 			var longest = this.longest(bunch);
 			longest.next = function() {//attach function 'next' to longest in total duration 
 				instance.launch(texts);//will call the next bunch
 			}
+		}
+		//for speller_completeEvent : if animatext is longest of last bunch, last = true
+		if(texts.length == 1) {
+			var longest = this.longest(bunch);
+			longest.last = true;
+		} 
+		//for speller_startEvent : if animatext is first of first bunch, first = true
+		if(texts.length === this.sortedAnimatexts.length) {
+			bunch[0].first = true;
 		}
 			
 		for(var i=0; i<bunch.length; i++) {//launch animation for all animatexts of the bunch
@@ -863,7 +945,7 @@ Speller.prototype.launch = function(texts) {
 			} else {
 				throw new TypeError('Invalid speller argument : action must be spell or unspell');
 			}
-			this.current = bunch;
+			this.current = bunch;//for stop, pause, resume
 		}
 		
 		texts.splice(0,1);//remove bunch dealt with	
