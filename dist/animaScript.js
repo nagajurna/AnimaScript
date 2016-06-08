@@ -10,9 +10,9 @@ function AnimaText(element,options) {
 		this.element = element;//HTML element
 	}
 	
-	//remove tab/spaces/newline at the beginning/end element
+	//remove tab/regular space at the beginning/end element
 	//replace repeated tab/spaces/newline by a single space
-	this.element.innerHTML = this.element.innerHTML.replace(/^\s*|\s(?=\s)|\s*$/g, "");
+	this.element.innerHTML = this.element.innerHTML.replace(/^( |\t|\n)*|\s(?=\s)|( |\t|\n)*$/g, "");
 	
 	if(options!==undefined) {//optional options : default values
 		options.unit===undefined//unit : c-haracter, w-ord, s-entence, a-ll (default 'c')
