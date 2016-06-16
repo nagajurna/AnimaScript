@@ -1,6 +1,24 @@
 'use strict';
 
 function AnimaText(element,options) {
+	
+	//CustomEvent() polyfill for ie
+	(function () {
+		
+	  if ( typeof window.CustomEvent === "function" ) return false;
+
+	  function CustomEvent ( event, params ) {
+		params = params || { bubbles: false, cancelable: false, detail: undefined };
+		var evt = document.createEvent( 'CustomEvent' );
+		evt.initCustomEvent( event, params.bubbles, params.cancelable, params.detail );
+		return evt;
+	   }
+
+	  CustomEvent.prototype = window.Event.prototype;
+
+	  window.CustomEvent = CustomEvent;
+	})();
+	
 	//options.element required (type : HTML element)
 	if(element===undefined) {
 		throw new TypeError('Invalid AnimaText() argument : element must be defined');
@@ -55,7 +73,7 @@ function AnimaText(element,options) {
 		this.callback = null;
 		this.order = 1;
 		this.action = null;
-		this.freezeSize = true;
+		this.freezeSize = false;
 	}
     
     this.text = this.getCharacters();//array of characters
@@ -109,7 +127,7 @@ AnimaText.prototype.getTextNodes = function() {//get array of text nodes
 	//private function
 	var getTextNodes = function(element) {//text nodes extracted and stored into array
 		for(var i=0; i<element.childNodes.length; i++) {
-			if(element.childNodes[i].nodeType==3) {//if childNode == text node
+			if(element.childNodes[i].nodeType===3) {//if childNode == text node
 				var node = {};//new object for each text node
 				node.parent = element.childNodes[i].parentNode;//parent element
 				node.index = i;//node index
@@ -853,9 +871,9 @@ Speller.prototype.getAnimatexts = function() {
 	var array = [];
 			
 	for(var i=0; i<this.elements.length; i++) {
-		//use of eval : options must be defined in global scope
-		if(eval(this.elements[i].getAttribute("data-animatext")) !== null) {
-			var animatext = new AnimaText(this.elements[i],eval(this.elements[i].getAttribute("data-animatext")));
+		//use of window[] : options must be defined in global scope
+		if(window[this.elements[i].getAttribute("data-animatext")] !== null) {
+			var animatext = new AnimaText(this.elements[i],window[this.elements[i].getAttribute("data-animatext")]);
 			if(animatext.freezeSize===true) { animatext.setSize(); }
 			//if unit = a or action = unspell : no emptyNodes
 			if(animatext.action != 'unspell' && animatext.unit != 'a') { animatext.emptyNodes(); }
@@ -954,7 +972,7 @@ Speller.prototype.launch = function(texts) {
 
 Speller.prototype.setOptions = function() {
 	for(var i=0; i<this.animatexts.length; i++) {
-		this._options = eval(this.animatexts[i].element.getAttribute("data-animatext"));
+		this._options = window[this.animatexts[i].element.getAttribute("data-animatext")];
 		if(this._options !== null) {
 			for(var option in this._options) {
 					this.animatexts[i][option] = this._options[option];
