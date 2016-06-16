@@ -62,7 +62,7 @@ function AnimaText(element,options) {
 		: this.action = options.action;
 		
 		options.freezeSize===undefined//order of animatexts (for speller)
-		? this.freezeSize = true 
+		? this.freezeSize = false 
 		: this.freezeSize = options.freezeSize;
 		
 	} else {
